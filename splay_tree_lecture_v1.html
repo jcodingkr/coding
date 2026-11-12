@@ -272,6 +272,24 @@ tree = delete(tree, 35)
 print_tree(tree)
 </pre>
 
+<p>실행 결과</p>
+<pre>--- 1. After inserting 30, 20, 40, 35 (35 becomes Root) ---
+[Root] 35
+   [Left] 30
+      [Left] 20
+   [Right] 40
+
+--- 2. After searching 20 (20 moves to Root) ---
+[Root] 20
+   [Right] 35
+      [Left] 30
+      [Right] 40
+
+--- 3. After deleting 35 ---
+[Root] 30
+   [Left] 20
+   [Right] 40</pre>
+
 <hr>
 
 <p class="ko">재귀 방식입니다. <code>splay(root, key)</code>는 key(또는 key를 찾다 만난 마지막 노드)를 루트로 올려 새 루트를 돌려줍니다.</p>
