@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Splay Tree 강의교안 / Splay Tree Lecture Notes</title>
+<style>
+:root{--bg:#161d20;--card:#1f282c;--line:#34434a;--tx:#eef1ea;--en:#9fb8c4;--ch:#f2d66b;--x:#ff8a5c;--p:#5fd7a5;--g:#b79bff;--nd:#2a3a42}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.75 "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:28px 18px 80px}
+h1{font-size:2.3rem;margin:.2em 0;color:var(--ch);letter-spacing:-.02em}
+h2{font-size:1.5rem;margin:2.4em 0 .6em;padding-bottom:.3em;border-bottom:2px dashed var(--line);color:var(--ch)}
+h3{font-size:1.1rem;margin:1.6em 0 .3em}
+.en{color:var(--en);font-size:.95rem;margin:.1em 0 .9em}
+p{margin:.5em 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:14px 0}
+.tip{border-left:4px solid var(--ch)}
+.warn{border-left:4px solid var(--x)}
+.fig{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;margin:12px 0}
+.st{background:#12181a;border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center;font-size:.85rem;max-width:100%;overflow-x:auto}
+.st b{display:block;color:var(--ch)}.st i{display:block;color:var(--en);font-style:normal}
+.ar{align-self:center;font-size:1.6rem;color:var(--ch)}
+svg text{font:600 14px system-ui,sans-serif;fill:#eef1ea;text-anchor:middle;dominant-baseline:central}
+.leg span{display:inline-block;margin-right:14px}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:middle}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+td,th{border:1px solid var(--line);padding:6px 10px;text-align:left}th{background:#263238;color:var(--ch)}
+pre{background:#0f1416;border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;font:13px/1.55 ui-monospace,Consolas,monospace;color:#dfe7d0}
+code{color:var(--ch)}
+details{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;color:var(--p)}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0;border-bottom:1px solid var(--line)}
+button{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:4px 12px;cursor:pointer;margin-right:6px}
+button:focus-visible{outline:2px solid var(--ch)}
+body.ko-only .en{display:none}body.en-only .ko{display:none}
+</style></head><body><main>
+<div class="bar"><button onclick="document.body.className=''">한글+English</button><button onclick="document.body.className='ko-only'">한글</button><button onclick="document.body.className='en-only'">English</button></div>
+
+<h1>Splay Tree (스플레이 트리)</h1>
+<p class="ko">방금 사용한 값을 루트로 끌어올리는 똑똑한 이진 탐색 트리</p>
+<p class="en">A smart binary search tree that pulls the value you just used up to the root</p>
+<div class="card ko">대상: 파이썬 수업 후 알고리즘·자료구조를 배우는 중·고등학생 · 선수 지식: 이진 탐색 트리(BST), 재귀</div>
+<div class="card en">Audience: students who finished Python and are learning algorithms &amp; data structures · Prerequisites: binary search tree (BST), recursion</div>
+
+<h2>1. Splay Tree란? / What is a Splay Tree?</h2>
+<p class="ko"><b>BST</b>는 왼쪽 &lt; 부모 &lt; 오른쪽 규칙을 지키는 트리입니다. 그런데 1, 2, 3, 4, 5를 순서대로 넣으면 한 줄로 길어져서 검색이 느려집니다. <b>Splay Tree</b>는 값을 <b>검색·삽입·삭제할 때마다 그 노드를 루트(맨 위)로 끌어올립니다</b>. 이 끌어올리는 동작을 <b>splay(스플레이)</b>라고 합니다.</p>
+<p class="en">A <b>BST</b> keeps left &lt; parent &lt; right. But inserting 1, 2, 3, 4, 5 in order makes a long chain and searching gets slow. A <b>Splay Tree</b> <b>moves the node you search, insert or delete to the root every time</b>. This move is called <b>splaying</b>.</p>
+<div class="card tip ko">💡 비유: 책상 위에 책을 쌓아 두고, 방금 본 책을 항상 맨 위에 올려놓는 것과 같습니다. 자주 쓰는 책은 늘 위쪽에 있어서 빨리 찾습니다.</div>
+<div class="card tip en">💡 Analogy: you keep a pile of books and always put the one you just read on top. Books you use often stay near the top, so you find them fast.</div>
+<table><tr><th>특징 / Feature</th><th>설명 / Description</th></tr>
+<tr><td>균형 정보 없음 / No balance info</td><td>색(Red-Black)이나 높이(AVL)를 저장하지 않음 / stores no color or height</td></tr>
+<tr><td>자기 조정 / Self-adjusting</td><td>접근할수록 구조가 스스로 바뀜 / shape changes as you access</td></tr>
+<tr><td>최근 접근 빠름 / Recent = fast</td><td>최근·자주 쓴 값이 루트 근처 / recent or frequent keys stay near the root</td></tr>
+<tr><td>시간 / Time</td><td>분할상환(amortized) O(log n), 최악 한 번은 O(n) / amortized O(log n), one op can be O(n)</td></tr></table>
+
+<h2>2. 기본 도구: 회전 / Basic Tool: Rotation</h2>
+<p class="ko">회전은 BST 규칙을 깨지 않고 부모와 자식의 위치를 바꾸는 동작입니다. 아래는 10을 올리는 <b>오른쪽 회전</b>(Right Rotation)입니다. 반대로 오른쪽 자식을 올리면 <b>왼쪽 회전</b>(Left Rotation)입니다.</p>
+<p class="en">A rotation swaps a parent and child without breaking the BST rule. Below is a <b>right rotation</b> lifting 10. Lifting a right child is a <b>left rotation</b>.</p>
+<div class="fig" data-f="rot"></div>
+<div class="card leg"><span><i class="dot" style="background:var(--x)"></i>x : 올릴 노드 / target</span><span><i class="dot" style="background:var(--p)"></i>p : 부모 / parent</span><span><i class="dot" style="background:var(--g)"></i>g : 조부모 / grandparent</span></div>
+
+<h2>3. Splay의 3가지 경우 / The 3 Cases</h2>
+<p class="ko">노드 x를 루트로 올릴 때, x의 <b>부모(p)</b>와 <b>조부모(g)</b>의 위치 관계로 경우를 나눕니다. 이 경우를 외우면 끝입니다!</p>
+<p class="en">To lift node x to the root, we look at the shape formed by x, its <b>parent (p)</b> and <b>grandparent (g)</b>. Learn these 3 cases and you are done!</p>
+
+<h3>Case 1. Zig (지그) — 부모가 루트 / parent is the root</h3>
+<p class="ko">조부모가 없을 때(마지막 단계) 회전 <b>한 번</b>. x가 왼쪽 자식이면 오른쪽 회전, 오른쪽 자식이면 왼쪽 회전.</p>
+<p class="en">No grandparent (the final step): <b>one</b> rotation. Left child → right rotation; right child → left rotation.</p>
+<div class="fig" data-f="zig"></div>
+
+<h3>Case 2. Zig-Zig (지그-지그) — 같은 방향 일직선 / same-direction line</h3>
+<p class="ko">x와 p가 둘 다 왼쪽 자식(또는 둘 다 오른쪽). <b>먼저 조부모 g를 회전, 그다음 부모 p를 회전</b>합니다. 순서가 중요합니다!</p>
+<p class="en">x and p are both left children (or both right). Rotate the <b>grandparent g first, then the parent p</b>. Order matters!</p>
+<div class="fig" data-f="zigzig"></div>
+<div class="card warn ko">⚠️ 흔한 실수: p부터 두 번 돌리면 일반 "회전 후 올리기"가 되어 분할상환 성능 보장이 깨집니다. 꼭 g → p 순서!</div>
+<div class="card warn en">⚠️ Common mistake: rotating p twice gives the naive "move-to-root" and loses the amortized guarantee. Always g → p!</div>
+
+<h3>Case 3. Zig-Zag (지그-재그) — 꺾인 모양 / bent shape</h3>
+<p class="ko">p는 왼쪽 자식인데 x는 오른쪽 자식(또는 반대). <b>x를 두 번 연속</b> 위로 회전합니다: 먼저 p 쪽, 다음 g 쪽.</p>
+<p class="en">p is a left child but x is a right child (or the reverse). Rotate <b>x upward twice</b>: first around p, then around g.</p>
+<div class="fig" data-f="zigzag"></div>
+
+<table><tr><th>경우 / Case</th><th>모양 / Shape</th><th>동작 / Action</th></tr>
+<tr><td>Zig</td><td>g 없음 / no g</td><td>x 회전 1번 / rotate x once</td></tr>
+<tr><td>Zig-Zig</td><td>x–p–g 일직선 / straight</td><td>g 회전 → p 회전 / rotate g, then p</td></tr>
+<tr><td>Zig-Zag</td><td>x–p–g 꺾임 / bent</td><td>x 회전 → x 회전 / rotate x, then x</td></tr></table>
+
+<h2>4. 연산별 예제 / Operations with Examples</h2>
+<h3>4-1. 검색 / Search (5 찾기)</h3>
+<p class="ko">BST처럼 5를 찾고, 찾은 노드를 splay합니다. 아래는 깊이 3인 5를 올리는 과정입니다: Zig-Zig 한 번(x=5, p=10, g=20) 후, 남은 부모 30에서 Zig.</p>
+<p class="en">Find 5 like a normal BST, then splay it. Here 5 is at depth 3: one Zig-Zig (x=5, p=10, g=20), then a final Zig with the remaining parent 30.</p>
+<div class="fig" data-f="search"></div>
+<p class="ko">결과: 5가 루트가 되었고, 중간 경로(10, 20, 30)는 아래로 모여 트리가 짧아졌습니다. 중위 순회는 그대로 5, 10, 20, 30, 40이므로 BST 규칙이 유지됩니다.</p>
+<p class="en">Result: 5 is the root and the path (10, 20, 30) got shorter. The in-order sequence is still 5, 10, 20, 30, 40, so the BST rule holds.</p>
+<div class="card tip ko">💡 못 찾아도 splay합니다! 마지막으로 방문한 노드(실패 직전 노드)를 루트로 올립니다.</div>
+<div class="card tip en">💡 Even a failed search splays: the last visited node becomes the root.</div>
+
+<h3>4-2. 삽입 / Insert</h3>
+<p class="ko"><b>① BST처럼 삽입 → ② 새 노드를 splay</b>. 먼저 10, 20, 30을 차례로 넣어 봅니다.</p>
+<p class="en"><b>① Insert like a BST → ② splay the new node.</b> First, insert 10, 20, 30 in order.</p>
+<div class="fig" data-f="ins1"></div>
+<p class="ko">항상 마지막에 넣은 값(30)이 루트입니다. 이번에는 35를 삽입하면 Zig-Zag가 일어납니다 (x=35, p=40, g=30).</p>
+<p class="en">The most recent key (30) is always the root. Now insert 35: a Zig-Zag happens (x=35, p=40, g=30).</p>
+<div class="fig" data-f="ins2"></div>
+
+<h3>4-3. 삭제 / Delete (20 삭제)</h3>
+<p class="ko"><b>① 지울 값을 splay → ② 루트를 제거(왼쪽 L, 오른쪽 R 두 트리) → ③ L의 최댓값을 splay로 루트에 올림 → ④ 그 루트의 오른쪽에 R을 붙임</b>.</p>
+<p class="en"><b>① Splay the key → ② remove the root (left tree L, right tree R) → ③ splay the max of L to L's root → ④ attach R as its right child.</b></p>
+<div class="fig" data-f="del"></div>
+<p class="ko">여기서는 L={10}이라 10이 이미 L의 최댓값이므로 바로 R을 붙입니다.</p>
+<p class="en">Here L={10}, so 10 is already L's max and R attaches directly.</p>
+
+<h2>5. 파이썬 구현 / Python Implementation</h2>
+<p class="ko">재귀 방식입니다. <code>splay(root, key)</code>는 key(또는 key를 찾다 만난 마지막 노드)를 루트로 올려 새 루트를 돌려줍니다.</p>
+<p class="en">A recursive version. <code>splay(root, key)</code> brings key (or the last node on the search path) to the top and returns the new root.</p>
+<pre>class Node:
+    def __init__(self, key):
+        self.key = key
+        self.left = self.right = None
+
+def rotate_right(x):             # 오른쪽 회전 / right rotation
+    y = x.left
+    x.left, y.right = y.right, x
+    return y
+
+def rotate_left(x):              # 왼쪽 회전 / left rotation
+    y = x.right
+    x.right, y.left = y.left, x
+    return y
+
+def splay(root, key):
+    if root is None or root.key == key:
+        return root
+    if key &lt; root.key:                       # 왼쪽 / go left
+        if root.left is None:
+            return root
+        if key &lt; root.left.key:              # Zig-Zig
+            root.left.left = splay(root.left.left, key)
+            root = rotate_right(root)         # g 먼저 / g first
+        elif key &gt; root.left.key:            # Zig-Zag
+            root.left.right = splay(root.left.right, key)
+            if root.left.right:
+                root.left = rotate_left(root.left)
+        return rotate_right(root) if root.left else root   # p (Zig)
+    else:                                     # 오른쪽 / go right
+        if root.right is None:
+            return root
+        if key &gt; root.right.key:             # Zig-Zig
+            root.right.right = splay(root.right.right, key)
+            root = rotate_left(root)
+        elif key &lt; root.right.key:           # Zig-Zag
+            root.right.left = splay(root.right.left, key)
+            if root.right.left:
+                root.right = rotate_right(root.right)
+        return rotate_left(root) if root.right else root
+
+def search(root, key):           # 검색 / search
+    return splay(root, key)      # root.key == key 이면 찾음 / found if equal
+
+def bst_insert(r, key):
+    if r is None: return Node(key)
+    if key &lt; r.key: r.left = bst_insert(r.left, key)
+    elif key &gt; r.key: r.right = bst_insert(r.right, key)
+    return r
+
+def insert(root, key):           # 삽입 = BST 삽입 + splay
+    return splay(bst_insert(root, key), key)
+
+def delete(root, key):
+    if root is None: return None
+    root = splay(root, key)
+    if root.key != key: return root          # 없음 / not found
+    if root.left is None: return root.right
+    L = splay(root.left, key)    # key가 L의 모든 값보다 크므로 최댓값이 루트로!
+    L.right = root.right         # key is larger than all in L, so L's max rises
+    return L
+
+def preorder(n):                 # 확인용 / for checking
+    return [] if n is None else [n.key] + preorder(n.left) + preorder(n.right)
+
+root = None
+for k in [10, 20, 30]:
+    root = insert(root, k)
+print(preorder(root))            # [30, 20, 10]  → 30이 루트 / 30 is the root
+root = search(root, 10)
+print(preorder(root))            # [10, 30, 20]</pre>
+
+<h2>6. 시간 복잡도 / Time Complexity</h2>
+<table><tr><th>연산 / Op</th><th>분할상환 / Amortized</th><th>최악 1회 / Worst single</th></tr>
+<tr><td>Search / Insert / Delete</td><td>O(log n)</td><td>O(n)</td></tr></table>
+<p class="ko">"분할상환"은 연산 m번의 총 시간을 m으로 나눈 평균이 O(log n)이라는 뜻입니다. 느린 연산(긴 줄 풀기)이 한 번 있으면, 그 덕분에 트리가 짧아져 다음 연산들이 빨라집니다.</p>
+<p class="en">"Amortized" means the average over m operations is O(log n). One slow operation (unrolling a long chain) shortens the tree and makes later operations fast.</p>
+<table><tr><th></th><th>장점 / Pros</th><th>단점 / Cons</th></tr>
+<tr><td>Splay</td><td>구현 간단, 추가 메모리 없음, 최근 값 빠름 / simple, no extra field, recent keys fast</td><td>검색도 트리를 바꿈, 한 번이 느릴 수 있음 / search modifies tree, one op can be slow</td></tr>
+<tr><td>Red-Black / AVL</td><td>최악도 O(log n) / worst case O(log n)</td><td>색·높이 저장, 구현 복잡 / extra field, harder code</td></tr></table>
+
+<h2>7. 연습문제 / Practice</h2>
+<p class="ko"><b>문제 1.</b> 빈 트리에 1, 2, 3, 4를 차례로 삽입한 최종 트리를 그려 보세요.</p><p class="en"><b>Q1.</b> Insert 1, 2, 3, 4 in order into an empty tree. Draw the final tree.</p>
+<details><summary>정답 / Answer</summary><div class="fig" data-f="a1"></div><p class="ko">삽입할 때마다 새 값이 루트로 올라가므로 4가 루트이고 왼쪽으로 한 줄입니다.</p><p class="en">Each new key becomes the root, so 4 is the root with a left chain.</p></details>
+<p class="ko"><b>문제 2.</b> 문제 1의 트리에서 1을 검색하면 어떻게 되나요? (Zig-Zig 후 Zig)</p><p class="en"><b>Q2.</b> Search 1 in the tree from Q1. (Zig-Zig, then Zig)</p>
+<details><summary>정답 / Answer</summary><div class="fig" data-f="a2"></div></details>
+<p class="ko"><b>문제 3.</b> Splay Tree에서 같은 값을 계속 검색하면 왜 빠를까요? <b>힌트</b>: 첫 검색 후 그 값의 위치는?</p><p class="en"><b>Q3.</b> Why is repeatedly searching the same key fast? <b>Hint</b>: where is the key after the first search?</p>
+<details><summary>정답 / Answer</summary><p class="ko">첫 검색 후 루트에 있어서 다음부터는 비교 1번으로 찾습니다.</p><p class="en">After the first search it is the root, so each next search needs just one comparison.</p></details>
+
+<h2>8. 정리 / Summary</h2>
+<div class="card ko">접근한 노드를 <b>splay</b>로 루트에 올린다 · 3가지 경우: <b>Zig / Zig-Zig(g→p) / Zig-Zag</b> · 삽입 = BST 삽입 + splay · 삭제 = splay + L의 최댓값 splay + R 연결 · 분할상환 O(log n)</div>
+<div class="card en">Splay the accessed node to the root · 3 cases: <b>Zig / Zig-Zig (g→p) / Zig-Zag</b> · Insert = BST insert + splay · Delete = splay + splay max of L + attach R · Amortized O(log n)</div>
+<p class="en" style="margin-top:2em">References: Wikipedia "Splay tree"; Cornell CS3110 Recitation 8; GeeksforGeeks "Introduction to Splay Tree".</p>
+
+<script>
+const T=(v,l,r)=>({v,l:l||null,r:r||null}),C={x:'#ff8a5c',p:'#5fd7a5',g:'#b79bff'};
+function svg(t,ro){ro=ro||{};if(!t)return'';let i=0,md=0;const ns=[],es=[];
+(function w(n,d,p){if(!n)return;w(n.l,d+1,n);n.x=i++;n.d=d;md=Math.max(md,d);ns.push(n);if(p)es.push([p,n]);w(n.r,d+1,n)})(t,0,null);
+const W=i*46+24,H=(md+1)*58+14,X=n=>n.x*46+35,Y=n=>n.d*58+28;
+return`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`+es.map(([p,n])=>`<line x1="${X(p)}" y1="${Y(p)}" x2="${X(n)}" y2="${Y(n)}" stroke="#6b8490" stroke-width="2"/>`).join('')+ns.map(n=>`<circle cx="${X(n)}" cy="${Y(n)}" r="17" fill="${ro[n.v]?C[ro[n.v]]:'#2a3a42'}" stroke="${ro[n.v]?'#fff':'#7fa3b3'}" stroke-width="2"/><text x="${X(n)}" y="${Y(n)}" ${ro[n.v]?'style="fill:#14191b"':''}>${n.v}</text>`).join('')+'</svg>'}
+const S=(ko,en,t,ro,t2)=>({ko,en,t,ro,t2});
+const F={
+rot:[S('전 Before','',T(20,T(10),T(30)),{10:'x',20:'p'}),'→',S('후 After (20 오른쪽 회전 / right rotate 20)','',T(10,null,T(20,null,T(30))),{10:'x'})],
+zig:[S('전 Before','x=10, p=20',T(20,T(10),T(30)),{10:'x',20:'p'}),'→',S('후 After','p 오른쪽 회전 / rotate p right',T(10,null,T(20,null,T(30))),{10:'x'})],
+zigzig:[S('전 Before','x=10, p=20, g=30',T(30,T(20,T(10)),T(40)),{10:'x',20:'p',30:'g'}),'→',S('① g(30) 회전 / rotate g','',T(20,T(10),T(30,null,T(40))),{10:'x',20:'p'}),'→',S('② p(20) 회전 후 / after rotating p','',T(10,null,T(20,null,T(30,null,T(40)))),{10:'x'})],
+zigzag:[S('전 Before','x=20, p=30, g=10',T(10,T(5),T(30,T(20),T(40))),{20:'x',30:'p',10:'g'}),'→',S('① p(30) 쪽 회전 / rotate at p','x가 올라옴 / x moves up',T(10,T(5),T(20,null,T(30,null,T(40)))),{20:'x',10:'g'}),'→',S('② g(10) 쪽 회전 후 / after rotating at g','',T(20,T(10,T(5)),T(30,null,T(40))),{20:'x'})],
+search:[S('전 Before','5 검색 / search 5',T(30,T(20,T(10,T(5))),T(40)),{5:'x',10:'p',20:'g'}),'→',S('Zig-Zig 후 / after Zig-Zig','x=5, p=30',T(30,T(5,null,T(10,null,T(20))),T(40)),{5:'x',30:'p'}),'→',S('Zig 후 (완료) / after Zig (done)','',T(5,null,T(30,T(10,null,T(20)),T(40))),{5:'x'})],
+ins1:[S('10 삽입','',T(10),{10:'x'}),'→',S('20 삽입 (BST)','x=20',T(10,null,T(20)),{20:'x',10:'p'}),'→',S('Zig','',T(20,T(10)),{20:'x'}),'→',S('30 삽입 (BST)','x=30',T(20,T(10),T(30)),{30:'x',20:'p'}),'→',S('Zig','',T(30,T(20,T(10))),{30:'x'})],
+ins2:[S('35 삽입 (BST) / insert','x=35, p=40, g=30',T(30,T(20),T(40,T(35))),{35:'x',40:'p',30:'g'}),'→',S('Zig-Zag 후 / after','',T(35,T(30,T(20)),T(40)),{35:'x'})],
+del:[S('전 Before','20 삭제 / delete 20',T(30,T(20,T(10),T(25)),T(40)),{20:'x',30:'p'}),'→',S('① 20 splay (Zig)','',T(20,T(10),T(30,T(25),T(40))),{20:'x'}),'→',S('② 루트 제거 / remove root','L=10, R=30…',T(10),{}, T(30,T(25),T(40))),'→',S('③④ R을 L 오른쪽에 / attach R','',T(10,null,T(30,T(25),T(40))),{10:'x'})],
+a1:[S('최종 / final','',T(4,T(3,T(2,T(1)))),{4:'x'})],
+a2:[S('1 검색 후 / after search 1','',T(1,null,T(4,T(2,null,T(3)))),{1:'x'})]};
+document.querySelectorAll('.fig').forEach(el=>{el.innerHTML=F[el.dataset.f].map(s=>typeof s=='string'?`<div class="ar">${s}</div>`:`<div class="st">${svg(s.t,s.ro)}${s.t2?svg(s.t2):''}<b>${s.ko}</b><i>${s.en}</i></div>`).join('')});
+</script></main></body></html>

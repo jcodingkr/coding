@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제이코딩 | J-Coding Academy Lecture Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0f172a',
+                        cardBg: '#1e293b',
+                        cardHeader: '#334155',
+                        accentBlue: '#38bdf8',
+                        accentGreen: '#4ade80',
+                        accentGold: '#fbbf24',
+                        accentPurple: '#c084fc',
+                        accentPink: '#f43f5e',
+                        textMain: '#f8fafc',
+                        textSub: '#94a3b8',
+                        borderMuted: '#334155'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['Fira Code', 'Consolas', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+        /* Language display filters */
+        .lang-en { display: block; }
+        .lang-ko { display: block; }
+
+        body.show-ko-only .lang-en { display: none !important; }
+        body.show-en-only .lang-ko { display: none !important; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header Bar -->
+    <header class="border-b border-borderMuted bg-cardBg/80 backdrop-blur py-4 px-4 sm:px-8">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-accentBlue to-accentPurple flex items-center justify-center text-darkBg font-black text-lg">
+                    J
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-textMain tracking-wide flex items-center gap-2">
+                        제이코딩 <span class="text-xs px-2 py-0.5 rounded bg-accentBlue/10 text-accentBlue border border-accentBlue/30 font-semibold">ACADEMY</span>
+                    </h1>
+                    <p class="text-xs text-textSub">Lecture & Visualizer Directory</p>
+                </div>
+            </div>
+
+            <!-- Language Selector -->
+            <div class="flex items-center space-x-1 bg-darkBg p-1 rounded-lg border border-borderMuted text-xs font-medium">
+                <button id="btnDual" onclick="setLanguageMode('dual')" class="px-3 py-1 rounded-md bg-accentBlue text-darkBg font-bold transition">Dual (한/영)</button>
+                <button id="btnKo" onclick="setLanguageMode('ko')" class="px-3 py-1 rounded-md hover:bg-cardHeader text-textMain transition">한국어만</button>
+                <button id="btnEn" onclick="setLanguageMode('en')" class="px-3 py-1 rounded-md hover:bg-cardHeader text-textMain transition">English</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Directory List -->
+    <main class="max-w-5xl mx-auto w-full px-4 sm:px-8 py-10 flex-grow space-y-8">
+        
+        <!-- Welcome Hero Banner -->
+        <div class="bg-gradient-to-r from-cardBg via-[#172033] to-cardBg p-6 rounded-2xl border border-borderMuted space-y-2">
+            <h2 class="text-xl font-bold text-textMain flex items-center gap-2">
+                <i class="fa-solid fa-folder-tree text-accentBlue"></i>
+                <span class="lang-ko">알고리즘 & 자료구조 강의 교안 목차</span>
+                <span class="lang-en">Course Directory & Interactive Notes</span>
+            </h2>
+            <p class="text-xs text-textSub leading-relaxed">
+                <span class="lang-ko">제이코딩 중/고등부 수강생을 위한 자료구조 및 알고리즘 웹 교안 디렉토리입니다. 아래 링크를 클릭하면 해당 수업 교안으로 이동합니다.</span>
+                <span class="lang-en">Directory of lecture notes and interactive visualizers for J-Coding Academy students. Click on any course note to launch.</span>
+            </p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-textSub text-xs"></i>
+            <input type="text" id="searchInput" onkeyup="filterLectures()" placeholder="Search lectures by topic or title... (예: Splay Tree, BST, Graph)" 
+                class="w-full pl-10 pr-4 py-2.5 bg-cardBg border border-borderMuted rounded-xl text-xs text-textMain focus:outline-none focus:border-accentBlue transition">
+        </div>
+
+        <!-- Directory Category Sections -->
+        <div class="space-y-6" id="lectureContainer">
+
+            <!-- Category: Advanced Data Structures -->
+            <div class="space-y-3 lecture-group">
+                <h3 class="text-xs font-bold text-accentGold uppercase tracking-wider flex items-center gap-2 px-1">
+                    <i class="fa-solid fa-tree"></i>
+                    <span>Advanced Data Structures (고급 자료구조)</span>
+                </h3>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <!-- Link Item: Splay Tree -->
+                    <a href="splay_tree.html" class="lecture-card block p-4 bg-cardBg hover:bg-cardHeader border border-accentGold/40 hover:border-accentGold rounded-xl transition duration-200 group">
+                        <div class="flex items-center justify-between">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-sm text-textMain group-hover:text-accentGold transition">
+                                        Splay Trees (스플레이 트리)
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded bg-accentGreen/20 text-accentGreen border border-accentGreen/30 text-[10px] font-bold">
+                                        <i class="fa-solid fa-gamepad mr-1"></i> Interactive Visualizer
+                                    </span>
+                                </div>
+                                <p class="text-xs text-textSub">
+                                    <span class="lang-ko">참조의 국소성, 3가지 회전 연산(Zig, Zig-Zig, Zig-Zag), 분할 상쇄 시간 분석 및 파이썬 구현</span>
+                                    <span class="lang-en">Locality of reference, Zig/Zig-Zig/Zig-Zag rotations, amortized analysis & Python code.</span>
+                                </p>
+                            </div>
+                            <div class="flex items-center space-x-2 text-accentGold font-mono text-xs font-semibold pl-4">
+                                <span class="hidden sm:inline">splay_tree.html</span>
+                                <i class="fa-solid fa-chevron-right text-xs group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Link Item: AVL Tree (Placeholder example) -->
+                    <div class="lecture-card p-4 bg-cardBg/50 border border-borderMuted/60 rounded-xl opacity-65 flex items-center justify-between">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-sm text-textMain">AVL Trees (AVL 트리)</span>
+                                <span class="px-2 py-0.5 rounded bg-cardHeader text-textSub text-[10px]">Upcoming</span>
+                            </div>
+                            <p class="text-xs text-textSub">Height-balanced binary search tree with LL, RR, LR, RL rotations.</p>
+                        </div>
+                        <span class="font-mono text-xs text-textSub">avl_tree.html</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category: Core Data Structures -->
+            <div class="space-y-3 lecture-group">
+                <h3 class="text-xs font-bold text-accentGreen uppercase tracking-wider flex items-center gap-2 px-1">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Core Data Structures (기초 자료구조)</span>
+                </h3>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="lecture-card p-4 bg-cardBg/50 border border-borderMuted/60 rounded-xl opacity-65 flex items-center justify-between">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-sm text-textMain">Binary Search Trees (이진 탐색 트리)</span>
+                                <span class="px-2 py-0.5 rounded bg-cardHeader text-textSub text-[10px]">Upcoming</span>
+                            </div>
+                            <p class="text-xs text-textSub">Standard BST insertion, deletion, searching & traversal methods.</p>
+                        </div>
+                        <span class="font-mono text-xs text-textSub">bst.html</span>
+                    </div>
+
+                    <div class="lecture-card p-4 bg-cardBg/50 border border-borderMuted/60 rounded-xl opacity-65 flex items-center justify-between">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-sm text-textMain">Stack & Queue (스택과 큐)</span>
+                                <span class="px-2 py-0.5 rounded bg-cardHeader text-textSub text-[10px]">Upcoming</span>
+                            </div>
+                            <p class="text-xs text-textSub">LIFO vs FIFO principles, deque implementations, and applications.</p>
+                        </div>
+                        <span class="font-mono text-xs text-textSub">stack_queue.html</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Simple Footer -->
+    <footer class="border-t border-borderMuted bg-cardBg/40 py-6 text-center text-xs text-textSub">
+        <p>제이코딩 학원 (J-Coding Academy) | Computer Science & Algorithms Directory</p>
+    </footer>
+
+    <!-- JavaScript Controls -->
+    <script>
+        function setLanguageMode(mode) {
+            const body = document.body;
+            body.classList.remove('show-ko-only', 'show-en-only');
+            
+            document.getElementById('btnDual').className = "px-3 py-1 rounded-md hover:bg-cardHeader text-textMain transition";
+            document.getElementById('btnKo').className = "px-3 py-1 rounded-md hover:bg-cardHeader text-textMain transition";
+            document.getElementById('btnEn').className = "px-3 py-1 rounded-md hover:bg-cardHeader text-textMain transition";
+
+            if(mode === 'ko') {
+                body.classList.add('show-ko-only');
+                document.getElementById('btnKo').className = "px-3 py-1 rounded-md bg-accentBlue text-darkBg font-bold transition";
+            } else if(mode === 'en') {
+                body.classList.add('show-en-only');
+                document.getElementById('btnEn').className = "px-3 py-1 rounded-md bg-accentBlue text-darkBg font-bold transition";
+            } else {
+                document.getElementById('btnDual').className = "px-3 py-1 rounded-md bg-accentBlue text-darkBg font-bold transition";
+            }
+        }
+
+        function filterLectures() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.lecture-card');
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if(text.includes(q)) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+    </script>
+</body>
+</html>
