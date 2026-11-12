@@ -122,6 +122,15 @@ body.ko-only .en{display:none}body.en-only .ko{display:none}
 <p class="ko">여기서는 L={10}이라 10이 이미 L의 최댓값이므로 바로 R을 붙입니다.</p>
 <p class="en">Here L={10}, so 10 is already L's max and R attaches directly.</p>
 
+<h2>연산 요약 비교</h2>
+<pre>
+연산 종류	        기본 동작 (BST 규칙)	        스플레이(Splaying) 대상 노드
+검색 (성공)	    값을 비교하며 목표 노드 탐색	        검색에 성공한 목표 노드
+검색 (실패)	    값을 비교하며 NULL까지 탐색	            NULL 직전에 마지막으로 방문한 부모 노드
+삽입	        빈자리를 찾아 새 노드 추가	            새로 삽입된 노드
+삭제	        목표 노드 제거 후 좌/우 트리 병합	    1) 삭제할 노드 → 2) 왼쪽 트리의 최댓값 노드
+</pre>
+
 <h2>5. 파이썬 구현 / Python Implementation</h2>
 <p class="ko">재귀 방식입니다. <code>splay(root, key)</code>는 key(또는 key를 찾다 만난 마지막 노드)를 루트로 올려 새 루트를 돌려줍니다.</p>
 <p class="en">A recursive version. <code>splay(root, key)</code> brings key (or the last node on the search path) to the top and returns the new root.</p>
