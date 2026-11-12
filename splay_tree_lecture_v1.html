@@ -132,6 +132,148 @@ body.ko-only .en{display:none}body.en-only .ko{display:none}
 </pre>
 
 <h2>5. 파이썬 구현 / Python Implementation</h2>
+<pre># 1. Create a new node using a dictionary
+def create_node(val):
+    return {"val": val, "left": None, "right": None}
+
+
+# 2. Right rotation (Zig)
+def rotate_right(node):
+    new_root = node["left"]
+    node["left"] = new_root["right"]
+    new_root["right"] = node
+    return new_root
+
+
+# 3. Left rotation (Zag)
+def rotate_left(node):
+    new_root = node["right"]
+    node["right"] = new_root["left"]
+    new_root["left"] = node
+    return new_root
+
+
+# 4. Splay operation: brings the target value (or closest node) to the root
+def splay(root, target):
+    if root is None or root["val"] == target:
+        return root
+
+    # [Case 1] Target is in the left subtree
+    if target < root["val"]:
+        if root["left"] is None:
+            return root
+
+        # Zig-Zig (Left-Left)
+        if target < root["left"]["val"]:
+            root["left"]["left"] = splay(root["left"]["left"], target)
+            root = rotate_right(root)
+
+        # Zig-Zag (Left-Right)
+        elif target > root["left"]["val"]:
+            root["left"]["right"] = splay(root["left"]["right"], target)
+            if root["left"]["right"] is not None:
+                root["left"] = rotate_left(root["left"])
+
+        return root if root["left"] is None else rotate_right(root)
+
+    # [Case 2] Target is in the right subtree
+    else:
+        if root["right"] is None:
+            return root
+
+        # Zag-Zig (Right-Left)
+        if target < root["right"]["val"]:
+            root["right"]["left"] = splay(root["right"]["left"], target)
+            if root["right"]["left"] is not None:
+                root["right"] = rotate_right(root["right"])
+
+        # Zag-Zag (Right-Right)
+        elif target > root["right"]["val"]:
+            root["right"]["right"] = splay(root["right"]["right"], target)
+            root = rotate_left(root)
+
+        return root if root["right"] is None else rotate_left(root)
+
+
+# 5. Search function
+def search(root, target):
+    return splay(root, target)
+
+
+# 6. Insert function
+def insert(root, val):
+    if root is None:
+        return create_node(val)
+
+    root = splay(root, val)
+
+    if root["val"] == val:
+        return root
+
+    new_node = create_node(val)
+
+    if val < root["val"]:
+        new_node["right"] = root
+        new_node["left"] = root["left"]
+        root["left"] = None
+    else:
+        new_node["left"] = root
+        new_node["right"] = root["right"]
+        root["right"] = None
+
+    return new_node
+
+
+# 7. Delete function
+def delete(root, val):
+    if root is None:
+        return None
+
+    root = splay(root, val)
+
+    if root["val"] != val:
+        return root
+
+    if root["left"] is None:
+        return root["right"]
+    else:
+        right_subtree = root["right"]
+        new_root = splay(root["left"], val)
+        new_root["right"] = right_subtree
+        return new_root
+
+
+# 8. Helper function to print the tree structure
+def print_tree(node, depth=0, side="Root"):
+    if node is not None:
+        print("   " * depth + f"[{side}] {node['val']}")
+        print_tree(node["left"], depth + 1, "Left")
+        print_tree(node["right"], depth + 1, "Right")
+
+
+# ==========================================
+# Example Usage
+# ==========================================
+tree = None
+numbers = [30, 20, 40, 35]
+
+for num in numbers:
+    tree = insert(tree, num)
+
+print("--- 1. After inserting 30, 20, 40, 35 (35 becomes Root) ---")
+print_tree(tree)
+
+print("\n--- 2. After searching 20 (20 moves to Root) ---")
+tree = search(tree, 20)
+print_tree(tree)
+
+print("\n--- 3. After deleting 35 ---")
+tree = delete(tree, 35)
+print_tree(tree)
+</pre>
+
+<hr>
+
 <p class="ko">재귀 방식입니다. <code>splay(root, key)</code>는 key(또는 key를 찾다 만난 마지막 노드)를 루트로 올려 새 루트를 돌려줍니다.</p>
 <p class="en">A recursive version. <code>splay(root, key)</code> brings key (or the last node on the search path) to the top and returns the new root.</p>
 <pre>class Node:
