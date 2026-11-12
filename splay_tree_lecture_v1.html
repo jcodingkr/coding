@@ -98,6 +98,10 @@ body.ko-only .en{display:none}body.en-only .ko{display:none}
 <div class="card tip en">💡 Even a failed search splays: the last visited node becomes the root.</div>
 
 <h3>4-2. 삽입 / Insert</h3>
+<p class=""ko">삽입 역시 일반 이진 탐색 트리 방식으로 새 노드의 위치를 먼저 찾은 뒤 트리를 재구성합니다.<br />
+• 새 노드 추가: 루트부터 값을 비교하며 내려가 알맞은 빈자리(NULL)에 새로운 노드를 삽입합니다.<br />
+• 루트로 이동: 방금 삽입된 새 노드에 대해 스플레이 연산을 수행하여 루트 자리로 끌어올립니다. (만약 이미 트리에 존재하는 값이라면 중복 삽입하지 않고 기존 노드를 스플레이하여 루트로 올립니다.)
+</p>
 <p class="ko"><b>① BST처럼 삽입 → ② 새 노드를 splay</b>. 먼저 10, 20, 30을 차례로 넣어 봅니다.</p>
 <p class="en"><b>① Insert like a BST → ② splay the new node.</b> First, insert 10, 20, 30 in order.</p>
 <div class="fig" data-f="ins1"></div>
@@ -106,6 +110,12 @@ body.ko-only .en{display:none}body.en-only .ko{display:none}
 <div class="fig" data-f="ins2"></div>
 
 <h3>4-3. 삭제 / Delete (20 삭제)</h3>
+<p class=""ko">삭제는 삭제할 노드를 먼저 루트로 올린 뒤 트리를 두 개로 쪼개고 다시 합치는(Join) 방식을 주로 사용합니다.<br />
+• 1단계 (루트로 이동): 삭제하려는 목표 노드를 먼저 검색합니다. 노드를 찾았다면 스플레이 연산을 수행해 삭제할 노드를 루트로 올립니다.<br />
+• 2단계 (루트 제거 및 분리): 루트가 된 목표 노드를 삭제합니다. 그러면 트리는 왼쪽 서브트리(L)와 오른쪽 서브트리(R) 두 개로 나뉩니다.<br />
+• 3단계 (서브트리 병합): 두 트리를 하나로 합치기 위해 왼쪽 서브트리(L)에서 가장 큰 값(최댓값 노드)을 찾습니다.<br />
+• 4단계 (새 루트 완성): 왼쪽 서브트리(L) 내에서 그 최댓값 노드를 스플레이하여 L의 새로운 루트로 만듭니다. 최댓값이므로 오른쪽 자식이 비어있게 되며, 이 빈 오른쪽 자식 자리에 오른쪽 서브트리(R)를 그대로 연결하면 삭제가 완료됩니다.
+</p>
 <p class="ko"><b>① 지울 값을 splay → ② 루트를 제거(왼쪽 L, 오른쪽 R 두 트리) → ③ L의 최댓값을 splay로 루트에 올림 → ④ 그 루트의 오른쪽에 R을 붙임</b>.</p>
 <p class="en"><b>① Splay the key → ② remove the root (left tree L, right tree R) → ③ splay the max of L to L's root → ④ attach R as its right child.</b></p>
 <div class="fig" data-f="del"></div>
