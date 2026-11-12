@@ -84,8 +84,13 @@ body.ko-only .en{display:none}body.en-only .ko{display:none}
 
 <h2>4. 연산별 예제 / Operations with Examples</h2>
 <h3>4-1. 검색 / Search (5 찾기)</h3>
+<p class="ko">검색은 일반 이진 탐색 트리와 동일하게 루트에서 시작하여 크기를 비교하며 내려갑니다.
+• 검색 성공 시: 찾으려는 목표 노드에 도달하면 탐색을 멈춥니다. 이후 해당 노드를 스플레이 연산을 통해 루트로 이동시킵니다.
+• 검색 실패 시: 찾는 값이 트리에 없어 NULL에 도달하면 탐색이 끝납니다. 이때는 방문했던 가장 마지막 노드(NULL의 부모 노드)를 스플레이하여 루트로 이동시킵니다.
+</p>
 <p class="ko">BST처럼 5를 찾고, 찾은 노드를 splay합니다. 아래는 깊이 3인 5를 올리는 과정입니다: Zig-Zig 한 번(x=5, p=10, g=20) 후, 남은 부모 30에서 Zig.</p>
 <p class="en">Find 5 like a normal BST, then splay it. Here 5 is at depth 3: one Zig-Zig (x=5, p=10, g=20), then a final Zig with the remaining parent 30.</p>
+
 <div class="fig" data-f="search"></div>
 <p class="ko">결과: 5가 루트가 되었고, 중간 경로(10, 20, 30)는 아래로 모여 트리가 짧아졌습니다. 중위 순회는 그대로 5, 10, 20, 30, 40이므로 BST 규칙이 유지됩니다.</p>
 <p class="en">Result: 5 is the root and the path (10, 20, 30) got shorter. The in-order sequence is still 5, 10, 20, 30, 40, so the BST rule holds.</p>
