@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Splay Tree Python 코드 행별 상세 설명</title>
+<style>
+:root{
+ --bg:#11141b;--panel:#1a1f2a;--panel2:#202735;--line:#343d4d;
+ --text:#e8edf5;--muted:#aab5c5;--accent:#f0b44d;--blue:#77bdfb;
+ --green:#62d6ad;--red:#ff8585;--purple:#c4a5ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;line-height:1.78;font-size:16px}
+main{max-width:1120px;margin:auto;padding:42px 22px 100px}
+h1{font-size:32px;line-height:1.3;margin:0 0 12px}
+h2{font-size:25px;margin:54px 0 14px;padding-top:20px;border-top:1px solid var(--line)}
+h3{font-size:19px;margin:30px 0 10px;color:var(--accent)}
+h4{font-size:16px;margin:18px 0 7px;color:var(--blue)}
+p{margin:8px 0 13px}
+.lead{font-size:18px;color:var(--muted)}
+.en{display:block;color:var(--muted);font-size:.93em;margin-top:3px}
+.small{font-size:14px;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:15px 0}
+.callout{border-left:4px solid var(--accent);background:var(--panel);padding:14px 18px;border-radius:5px 10px 10px 5px;margin:18px 0}
+.callout.good{border-left-color:var(--green)}
+.callout.warn{border-left-color:var(--red)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#252d3a;padding:2px 5px;border-radius:5px;font-size:.92em}
+pre{white-space:pre;overflow-x:auto;background:#0b0e14;border:1px solid var(--line);border-radius:10px;padding:17px 18px;line-height:1.62;font-size:13.5px;color:#dce6f4}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px}
+th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--accent)}
+ul,ol{padding-left:24px}
+li{margin:7px 0}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:2px 9px;color:var(--blue);font-size:13px;margin-right:5px}
+.diagram{background:#0b0e14;border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto}
+.diagram pre{border:0;margin:0;padding:0}
+details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:14px 0}
+summary{cursor:pointer;color:var(--accent);font-weight:700}
+a{color:var(--blue)}
+@media(max-width:650px){main{padding:26px 14px 70px}h1{font-size:26px}h2{font-size:21px}body{font-size:15px}pre{font-size:12px}}
+</style>
+</head>
+<body>
+<main>
+<h1>Splay Tree: Python 코드 행별 상세 설명</h1>
+<p class="lead">Dictionary로 노드를 표현한 Splay Tree의 생성, 회전, Splay, Search, Insert, Delete 과정을 코드 한 줄씩 살펴봅니다.</p>
+<p class="en">A line-by-line guide to creating nodes, rotating, splaying, searching, inserting, and deleting in a Splay Tree implemented with Python dictionaries.</p>
+
+<div class="callout">
+<strong>학습 목표 / Learning Objectives</strong>
+<ul>
+<li>각 함수가 어떤 역할을 하는지 설명할 수 있습니다.<span class="en">Explain the purpose of each function.</span></li>
+<li>Zig, Zig-Zig, Zig-Zag, Zag-Zig, Zag-Zag 회전을 구분할 수 있습니다.<span class="en">Distinguish the five rotation patterns.</span></li>
+<li>검색·삽입·삭제 후 목표 노드가 루트로 이동하는 원리를 이해합니다.<span class="en">Understand how the accessed node is moved to the root after search, insertion, and deletion.</span></li>
+</ul>
+</div>
+
+<h2>1. Splay Tree 핵심 개념 / Core Concept</h2>
+<div class="card">
+<p><strong>Splay Tree</strong>는 자체 균형 이진 탐색 트리(Self-adjusting Binary Search Tree)입니다. 노드를 검색하거나 삽입·삭제할 때 접근한 노드를 회전시켜 루트로 이동시킵니다.</p>
+<p class="en">A Splay Tree is a self-adjusting binary search tree. When a node is searched, inserted, or deleted, rotations move the accessed node toward the root.</p>
+<p>AVL Tree나 Red-Black Tree처럼 항상 정해진 균형 조건을 유지하는 것이 아니라, 최근에 접근한 노드를 루트 가까이에 두는 방식입니다.</p>
+<p class="en">Unlike AVL or Red-Black Trees, it does not maintain a strict balance condition. Instead, it keeps recently accessed nodes near the root.</p>
+</div>
+<table>
+<tr><th>용어 / Term</th><th>의미 / Meaning</th></tr>
+<tr><td>Zig</td><td>한 번 회전하여 부모가 루트가 되는 경우 / A single rotation that moves the child to the root.</td></tr>
+<tr><td>Zig-Zig</td><td>목표와 부모가 같은 방향에 있는 두 단계 회전 / Two rotations when target and parent lie in the same direction.</td></tr>
+<tr><td>Zig-Zag</td><td>목표와 부모가 반대 방향에 있는 두 단계 회전 / Two rotations when target and parent lie in opposite directions.</td></tr>
+<tr><td>Splay</td><td>목표 노드 또는 목표에 가장 가까운 노드를 루트로 이동 / Move the target or the closest node to the root.</td></tr>
+</table>
+
+<h2>2. 노드 생성 / Creating a Node</h2>
+<pre><code>def create_node(val):
+    return {"val": val, "left": None, "right": None}</code></pre>
+<div class="card">
+<h4>1행 / Line 1</h4>
+<p><code>def create_node(val):</code></p>
+<p>새 노드를 생성하는 함수를 정의합니다. <code>val</code>은 노드에 저장할 값입니다.</p>
+<p class="en">Defines a function that creates a new node. <code>val</code> is the value to store in the node.</p>
+<h4>2행 / Line 2</h4>
+<p><code>return {"val": val, "left": None, "right": None}</code></p>
+<p>Python 딕셔너리를 노드로 사용합니다. <code>"val"</code>에는 데이터, <code>"left"</code>에는 왼쪽 자식, <code>"right"</code>에는 오른쪽 자식을 저장합니다. 처음에는 자식이 없으므로 두 포인터 역할의 값은 <code>None</code>입니다.</p>
+<p class="en">Uses a Python dictionary as a node. The key <code>"val"</code> stores the data, while <code>"left"</code> and <code>"right"</code> store references to the child nodes. Both children initially contain <code>None</code>.</p>
+</div>
+<div class="diagram"><pre>create_node(30)
+      |
+      v
+{"val": 30, "left": None, "right": None}
+
+       30
+      /  \
+   None  None</pre></div>
+
+<h2>3. 회전 연산 / Rotation Operations</h2>
+<h3>3-1. 오른쪽 회전 (Zig) / Right Rotation</h3>
+<pre><code>def rotate_right(node):
+    new_root = node["left"]
+    node["left"] = new_root["right"]
+    new_root["right"] = node
+    return new_root</code></pre>
+<table>
+<tr><th>코드 / Code</th><th>상세 설명 / Detailed Explanation</th></tr>
+<tr><td><code>def rotate_right(node):</code></td><td>전달받은 노드를 기준으로 오른쪽 회전을 수행하는 함수를 정의합니다.<span class="en">Defines a right rotation around the supplied node.</span></td></tr>
+<tr><td><code>new_root = node["left"]</code></td><td>현재 노드의 왼쪽 자식을 회전 후 새로운 루트로 지정합니다.<span class="en">Selects the current node's left child as the new subtree root.</span></td></tr>
+<tr><td><code>node["left"] = new_root["right"]</code></td><td>새 루트의 오른쪽 서브트리를 기존 노드의 왼쪽 자리에 연결합니다. 이 서브트리는 BST의 정렬 순서를 유지하는 위치입니다.<span class="en">Moves the new root's right subtree to become the old root's left subtree. This preserves BST ordering.</span></td></tr>
+<tr><td><code>new_root["right"] = node</code></td><td>기존 노드를 새 루트의 오른쪽 자식으로 연결합니다.<span class="en">Makes the old root the right child of the new root.</span></td></tr>
+<tr><td><code>return new_root</code></td><td>회전이 끝난 서브트리의 새로운 루트를 반환합니다. 호출한 쪽에서 반드시 반환값을 다시 연결해야 합니다.<span class="en">Returns the new subtree root. The caller must reconnect this returned node.</span></td></tr>
+</table>
+<div class="diagram"><pre>회전 전 / Before                 회전 후 / After
+
+       30                              20
+      /                               /  \
+     20                              10   30
+    /  \
+   10  25
+
+30의 왼쪽 자리에 25를 연결하고,
+20의 오른쪽에 30을 연결합니다.</pre></div>
+
+<h3>3-2. 왼쪽 회전 (Zag) / Left Rotation</h3>
+<pre><code>def rotate_left(node):
+    new_root = node["right"]
+    node["right"] = new_root["left"]
+    new_root["left"] = node
+    return new_root</code></pre>
+<table>
+<tr><th>코드 / Code</th><th>상세 설명 / Detailed Explanation</th></tr>
+<tr><td><code>def rotate_left(node):</code></td><td>현재 노드를 기준으로 왼쪽 회전을 수행합니다.<span class="en">Defines a left rotation around the current node.</span></td></tr>
+<tr><td><code>new_root = node["right"]</code></td><td>현재 노드의 오른쪽 자식을 새로운 루트로 선택합니다.<span class="en">Chooses the current node's right child as the new root.</span></td></tr>
+<tr><td><code>node["right"] = new_root["left"]</code></td><td>새 루트의 왼쪽 서브트리를 기존 노드의 오른쪽 자리에 옮깁니다.<span class="en">Moves the new root's left subtree to the old root's right side.</span></td></tr>
+<tr><td><code>new_root["left"] = node</code></td><td>기존 노드를 새 루트의 왼쪽 자식으로 연결합니다.<span class="en">Makes the old root the left child of the new root.</span></td></tr>
+<tr><td><code>return new_root</code></td><td>회전 후 새로운 서브트리 루트를 반환합니다.<span class="en">Returns the new root of the rotated subtree.</span></td></tr>
+</table>
+<div class="diagram"><pre>회전 전 / Before                 회전 후 / After
+
+   20                                  30
+     \                                /  \
+      30                             20   40
+     /  \
+    25  40</pre></div>
+
+<h2>4. Splay 연산 / The Splay Operation</h2>
+<p><code>splay(root, target)</code>는 이 코드에서 가장 중요한 함수입니다. 목표값을 찾거나, 값이 없으면 탐색 경로에서 가장 가까운 노드를 루트로 이동시킵니다.</p>
+<p class="en">The <code>splay(root, target)</code> function is the core of this implementation. It moves the target to the root, or, if the target is absent, moves the last/closest node reached during the search to the root.</p>
+<pre><code>def splay(root, target):
+    if root is None or root["val"] == target:
+        return root
+
+    if target &lt; root["val"]:
+        if root["left"] is None:
+            return root
+
+        if target &lt; root["left"]["val"]:
+            root["left"]["left"] = splay(root["left"]["left"], target)
+            root = rotate_right(root)
+
+        elif target &gt; root["left"]["val"]:
+            root["left"]["right"] = splay(root["left"]["right"], target)
+            if root["left"]["right"] is not None:
+                root["left"] = rotate_left(root["left"])
+
+        return root if root["left"] is None else rotate_right(root)
+
+    else:
+        if root["right"] is None:
+            return root
+
+        if target &lt; root["right"]["val"]:
+            root["right"]["left"] = splay(root["right"]["left"], target)
+            if root["right"]["left"] is not None:
+                root["right"] = rotate_right(root["right"])
+
+        elif target &gt; root["right"]["val"]:
+            root["right"]["right"] = splay(root["right"]["right"], target)
+            root = rotate_left(root)
+
+        return root if root["right"] is None else rotate_left(root)</code></pre>
+
+<h3>4-1. 종료 조건 / Base Case</h3>
+<table>
+<tr><th>코드 / Code</th><th>설명 / Explanation</th></tr>
+<tr><td><code>if root is None or root["val"] == target:</code></td><td>현재 서브트리가 비어 있거나 현재 노드가 목표값이면 더 내려갈 필요가 없습니다.<span class="en">Stops if the subtree is empty or the current node already contains the target.</span></td></tr>
+<tr><td><code>return root</code></td><td>현재 노드를 그대로 반환합니다. 재귀 호출에서는 이 반환값을 부모의 자식 링크에 다시 저장합니다.<span class="en">Returns the current node unchanged. Recursive callers reconnect the returned subtree.</span></td></tr>
+</table>
+
+<h3>4-2. 목표값이 왼쪽에 있는 경우 / Target Is in the Left Subtree</h3>
+<p><code>if target &lt; root["val"]:</code> 현재 값보다 목표값이 작으므로 왼쪽 서브트리에서 탐색합니다.</p>
+<p class="en">Since the target is smaller than the current value, the search continues into the left subtree.</p>
+<table>
+<tr><th>코드 / Code</th><th>상세 설명 / Detailed Explanation</th></tr>
+<tr><td><code>if root["left"] is None:</code></td><td>왼쪽 자식이 없다면 더 이상 왼쪽으로 내려갈 수 없습니다.<span class="en">Checks whether a left child exists.</span></td></tr>
+<tr><td><code>return root</code></td><td>목표값이 없으므로 현재 노드를 반환합니다. 현재 노드가 이 탐색 경로에서 마지막으로 도달한 노드입니다.<span class="en">Returns the current node because the target cannot be found farther down this path.</span></td></tr>
+<tr><td><code>if target &lt; root["left"]["val"]:</code></td><td>목표값이 왼쪽 자식보다도 작습니다. 목표는 왼쪽-왼쪽(Left-Left) 방향에 있으므로 Zig-Zig 패턴입니다.<span class="en">The target is smaller than the left child, giving a Left-Left (Zig-Zig) pattern.</span></td></tr>
+<tr><td><code>root["left"]["left"] = splay(root["left"]["left"], target)</code></td><td>왼쪽 자식의 왼쪽 서브트리에서 목표값을 재귀적으로 Splay합니다. 반환된 서브트리를 원래 위치에 연결합니다.<span class="en">Recursively splays within the left child's left subtree and reconnects the returned subtree.</span></td></tr>
+<tr><td><code>root = rotate_right(root)</code></td><td>현재 루트를 기준으로 오른쪽 회전을 한 번 수행합니다. Zig-Zig의 첫 번째 회전입니다.<span class="en">Performs the first right rotation of the Zig-Zig pattern.</span></td></tr>
+<tr><td><code>elif target &gt; root["left"]["val"]:</code></td><td>목표값이 현재 루트보다는 작지만 왼쪽 자식보다는 큽니다. 왼쪽-오른쪽(Left-Right) 방향인 Zig-Zag 패턴입니다.<span class="en">The target lies between the current root and its left child: a Left-Right (Zig-Zag) pattern.</span></td></tr>
+<tr><td><code>root["left"]["right"] = splay(root["left"]["right"], target)</code></td><td>왼쪽 자식의 오른쪽 서브트리에서 목표를 재귀적으로 Splay합니다.<span class="en">Recursively splays the left child's right subtree.</span></td></tr>
+<tr><td><code>if root["left"]["right"] is not None:</code></td><td>재귀 호출 후 해당 위치에 노드가 존재하는지 확인합니다. 노드가 있을 때만 회전할 수 있습니다.<span class="en">Checks that a node exists there before attempting a rotation.</span></td></tr>
+<tr><td><code>root["left"] = rotate_left(root["left"])</code></td><td>왼쪽 자식을 기준으로 왼쪽 회전을 수행합니다. Zig-Zag 패턴의 첫 번째 회전입니다.<span class="en">Rotates the left child to the left: the first rotation of Zig-Zag.</span></td></tr>
+<tr><td><code>return root if root["left"] is None else rotate_right(root)</code></td><td>왼쪽 자식이 없다면 현재 루트를 반환합니다. 왼쪽 자식이 있다면 현재 루트를 오른쪽 회전하여 목표 노드를 위로 올립니다. 이 단계는 왼쪽 방향 탐색에서 마지막 회전(Zig)을 수행합니다.<span class="en">Returns the current root if there is no left child; otherwise performs a final right rotation to move the accessed node upward.</span></td></tr>
+</table>
+
+<h3>4-3. 목표값이 오른쪽에 있는 경우 / Target Is in the Right Subtree</h3>
+<p><code>else:</code> 위의 왼쪽 조건이 아니므로 목표값은 현재 값보다 크거나 같습니다. 현재 노드와 같은 값인 경우는 함수 초반에 이미 종료되었으므로 오른쪽으로 탐색합니다.</p>
+<p class="en">Otherwise, the target is greater than the current value. Equality has already been handled by the base case, so the search proceeds right.</p>
+<table>
+<tr><th>코드 / Code</th><th>상세 설명 / Detailed Explanation</th></tr>
+<tr><td><code>if root["right"] is None:</code></td><td>오른쪽 자식이 없으면 더 내려갈 수 없습니다.<span class="en">Checks whether a right child exists.</span></td></tr>
+<tr><td><code>return root</code></td><td>목표값이 없으므로 현재 노드를 반환합니다.<span class="en">Returns the current node when the target is not present below it.</span></td></tr>
+<tr><td><code>if target &lt; root["right"]["val"]:</code></td><td>목표값이 오른쪽 자식보다 작습니다. 오른쪽-왼쪽(Right-Left) 방향인 Zag-Zig 패턴입니다.<span class="en">The target is smaller than the right child, forming a Right-Left (Zag-Zig) pattern.</span></td></tr>
+<tr><td><code>root["right"]["left"] = splay(root["right"]["left"], target)</code></td><td>오른쪽 자식의 왼쪽 서브트리에서 재귀적으로 Splay합니다.<span class="en">Recursively splays the right child's left subtree.</span></td></tr>
+<tr><td><code>if root["right"]["left"] is not None:</code></td><td>회전할 노드가 실제로 존재하는지 확인합니다.<span class="en">Checks that the relevant child exists before rotating.</span></td></tr>
+<tr><td><code>root["right"] = rotate_right(root["right"])</code></td><td>오른쪽 자식을 기준으로 오른쪽 회전을 수행합니다. Zag-Zig의 첫 번째 회전입니다.<span class="en">Performs a right rotation on the right child, the first step of Zag-Zig.</span></td></tr>
+<tr><td><code>elif target &gt; root["right"]["val"]:</code></td><td>목표값이 오른쪽 자식보다도 큽니다. 오른쪽-오른쪽(Right-Right) 방향인 Zag-Zag 패턴입니다.<span class="en">The target is greater than the right child, forming a Right-Right (Zag-Zag) pattern.</span></td></tr>
+<tr><td><code>root["right"]["right"] = splay(root["right"]["right"], target)</code></td><td>오른쪽 자식의 오른쪽 서브트리에서 재귀적으로 Splay합니다.<span class="en">Recursively splays the right child's right subtree.</span></td></tr>
+<tr><td><code>root = rotate_left(root)</code></td><td>현재 루트를 왼쪽 회전합니다. Zag-Zag의 첫 번째 회전입니다.<span class="en">Performs the first left rotation of Zag-Zag.</span></td></tr>
+<tr><td><code>return root if root["right"] is None else rotate_left(root)</code></td><td>오른쪽 자식이 없으면 현재 루트를 반환하고, 있으면 왼쪽 회전을 한 번 더 수행해 목표 노드를 위로 올립니다.<span class="en">Returns the current root if no right child remains; otherwise performs the final left rotation to move the accessed node upward.</span></td></tr>
+</table>
+
+<div class="callout warn">
+<strong>구현을 읽을 때 주의 / Important Implementation Note</strong>
+<p>이 코드는 재귀적으로 아래쪽 서브트리를 Splay한 뒤, 현재 단계에서 회전을 수행하는 방식입니다. 회전 함수는 입력 노드의 링크를 직접 변경하므로, 호출 결과를 <code>root</code> 또는 해당 자식 링크에 다시 대입하는 것이 중요합니다.</p>
+<p class="en">This implementation recursively splays a lower subtree and then performs rotations at the current level. Since rotations modify links, assigning the returned subtree root back to <code>root</code> or the appropriate child link is essential.</p>
+</div>
+
+<h2>5. 검색 함수 / Search Function</h2>
+<pre><code>def search(root, target):
+    return splay(root, target)</code></pre>
+<table>
+<tr><th>코드 / Code</th><th>설명 / Explanation</th></tr>
+<tr><td><code>def search(root, target):</code></td><td>루트와 찾을 값을 전달받는 검색 함수를 정의합니다.<span class="en">Defines a search function that receives the root and target value.</span></td></tr>
+<tr><td><code>return splay(root, target)</code></td><td>일반 BST처럼 값만 반환하는 대신 Splay를 수행한 새 루트를 반환합니다. 따라서 호출할 때 <code>tree = search(tree, 20)</code>처럼 루트 변수에 다시 저장해야 합니다.<span class="en">Instead of merely returning a found value, it returns the root after splaying. Reassign it, for example: <code>tree = search(tree, 20)</code>.</span></td></tr>
+</table>
+<div class="callout good">
+검색 성공 시 찾은 노드가 루트가 됩니다. 검색 실패 시에는 탐색이 끝난 지점의 가장 가까운 노드가 루트 쪽으로 이동합니다.</p>
+<span class="en">On a successful search, the found node becomes the root. On an unsuccessful search, the last/closest node reached is moved toward the root.</span>
+</div>
+
+<h2>6. 삽입 함수 / Insert Function</h2>
+<pre><code>def insert(root, val):
+    if root is None:
+        return create_node(val)
+
+    root = splay(root, val)
+
+    if root["val"] == val:
+        return root
+
+    new_node = create_node(val)
+
+    if val &lt; root["val"]:
+        new_node["right"] = root
+        new_node["left"] = root["left"]
+        root["left"] = None
+    else:
+        new_node["left"] = root
+        new_node["right"] = root["right"]
+        root["right"] = None
+
+    return new_node</code></pre>
+<table>
+<tr><th>코드 / Code</th><th>상세 설명 / Detailed Explanation</th></tr>
+<tr><td><code>def insert(root, val):</code></td><td>현재 트리와 삽입할 값을 전달받습니다.<span class="en">Receives the current tree and the value to insert.</span></td></tr>
+<tr><td><code>if root is None:</code></td><td>트리가 비어 있는지 확인합니다.<span class="en">Checks whether the tree is empty.</span></td></tr>
+<tr><td><code>return create_node(val)</code></td><td>빈 트리라면 새 노드가 곧 루트가 됩니다.<span class="en">If the tree is empty, the new node becomes the root.</span></td></tr>
+<tr><td><code>root = splay(root, val)</code></td><td>삽입 전에 삽입할 값 또는 가장 가까운 노드를 루트로 이동시킵니다.<span class="en">Before insertion, moves the target or closest node to the root.</span></td></tr>
+<tr><td><code>if root["val"] == val:</code></td><td>이미 같은 값이 루트에 있는지 확인합니다.<span class="en">Checks whether the value already exists at the root.</span></td></tr>
+<tr><td><code>return root</code></td><td>중복값은 추가하지 않고 현재 트리를 반환합니다.<span class="en">Does not insert a duplicate; returns the current tree.</span></td></tr>
+<tr><td><code>new_node = create_node(val)</code></td><td>삽입할 새 노드를 생성합니다.<span class="en">Creates the node to be inserted.</span></td></tr>
+<tr><td><code>if val &lt; root["val"]:</code></td><td>새 값이 현재 루트보다 작으면 새 노드가 루트가 되어야 합니다. 기존 루트와 그 오른쪽 서브트리는 새 값보다 큰 영역에 속합니다.<span class="en">If the new value is smaller, the new node becomes the root. The old root and its right subtree belong on the new node's right side.</span></td></tr>
+<tr><td><code>new_node["right"] = root</code></td><td>기존 루트를 새 노드의 오른쪽 자식으로 연결합니다.<span class="en">Attaches the old root as the new node's right child.</span></td></tr>
+<tr><td><code>new_node["left"] = root["left"]</code></td><td>기존 루트의 왼쪽 서브트리를 새 노드의 왼쪽으로 옮깁니다. 이 값들은 새 값보다 작습니다.<span class="en">Moves the old root's left subtree to the new node's left side; all those values are smaller than the inserted value.</span></td></tr>
+<tr><td><code>root["left"] = None</code></td><td>왼쪽 서브트리를 새 노드로 옮겼으므로 기존 루트의 왼쪽 링크를 비웁니다. 같은 서브트리가 두 곳에서 참조되는 것을 막습니다.<span class="en">Clears the old root's left link because that subtree has been transferred.</span></td></tr>
+<tr><td><code>else:</code></td><td>새 값이 현재 루트보다 큰 경우입니다.<span class="en">Handles the case where the new value is greater than the current root.</span></td></tr>
+<tr><td><code>new_node["left"] = root</code></td><td>기존 루트를 새 노드의 왼쪽 자식으로 연결합니다.<span class="en">Attaches the old root as the new node's left child.</span></td></tr>
+<tr><td><code>new_node["right"] = root["right"]</code></td><td>기존 루트의 오른쪽 서브트리를 새 노드의 오른쪽으로 옮깁니다.<span class="en">Moves the old root's right subtree to the new node's right side.</span></td></tr>
+<tr><td><code>root["right"] = None</code></td><td>오른쪽 서브트리를 새 노드로 옮겼으므로 기존 루트의 오른쪽 링크를 비웁니다.<span class="en">Clears the old root's right link after transferring that subtree.</span></td></tr>
+<tr><td><code>return new_node</code></td><td>새 노드를 루트로 하는 트리를 반환합니다.<span class="en">Returns the tree with the new node as its root.</span></td></tr>
+</table>
+
+<h2>7. 삭제 함수 / Delete Function</h2>
+<pre><code>def delete(root, val):
+    if root is None:
+        return None
+
+    root = splay(root, val)
+
+    if root["val"] != val:
+        return root
+
+    if root["left"] is None:
+        return root["right"]
+    else:
+        right_subtree = root["right"]
+        new_root = splay(root["left"], val)
+        new_root["right"] = right_subtree
+        return new_root</code></pre>
+<table>
+<tr><th>코드 / Code</th><th>상세 설명 / Detailed Explanation</th></tr>
+<tr><td><code>def delete(root, val):</code></td><td>트리에서 삭제할 값을 전달받는 함수를 정의합니다.<span class="en">Defines a function that receives the tree and the value to delete.</span></td></tr>
+<tr><td><code>if root is None:</code></td><td>삭제할 트리가 비어 있는지 확인합니다.<span class="en">Checks whether the tree is empty.</span></td></tr>
+<tr><td><code>return None</code></td><td>빈 트리에서 삭제할 것은 없으므로 <code>None</code>을 반환합니다.<span class="en">Returns <code>None</code> because there is nothing to delete.</span></td></tr>
+<tr><td><code>root = splay(root, val)</code></td><td>삭제 대상 또는 가장 가까운 노드를 루트로 이동시킵니다.<span class="en">Splays the target or closest node to the root.</span></td></tr>
+<tr><td><code>if root["val"] != val:</code></td><td>루트의 값이 삭제할 값과 다르면 트리에 해당 값이 없습니다.<span class="en">If the root value differs from the target, the value was not found.</span></td></tr>
+<tr><td><code>return root</code></td><td>삭제하지 않고 Splay 이후의 트리를 반환합니다. 검색 실패 과정에서 루트가 바뀌었을 수 있습니다.<span class="en">Returns the tree without deleting anything. The root may have changed during the unsuccessful splay.</span></td></tr>
+<tr><td><code>if root["left"] is None:</code></td><td>삭제 대상 노드에 왼쪽 서브트리가 없는지 확인합니다.<span class="en">Checks whether the node to delete has no left subtree.</span></td></tr>
+<tr><td><code>return root["right"]</code></td><td>왼쪽 서브트리가 없다면 오른쪽 서브트리가 삭제된 노드의 자리를 대신합니다.<span class="en">If there is no left subtree, the right subtree replaces the deleted root.</span></td></tr>
+<tr><td><code>else:</code></td><td>왼쪽 서브트리가 존재하는 경우입니다.<span class="en">Handles the case where a left subtree exists.</span></td></tr>
+<tr><td><code>right_subtree = root["right"]</code></td><td>기존 루트의 오른쪽 서브트리를 임시 변수에 보관합니다. 왼쪽 서브트리를 정리하는 동안 잃어버리지 않기 위함입니다.<span class="en">Temporarily saves the right subtree so it is not lost while processing the left subtree.</span></td></tr>
+<tr><td><code>new_root = splay(root["left"], val)</code></td><td>왼쪽 서브트리에서 <code>val</code>을 Splay합니다. 왼쪽 서브트리의 모든 값은 삭제값보다 작으므로 <code>val</code>은 존재하지 않습니다. 따라서 이 호출은 왼쪽 서브트리의 가장 큰 값(마지막으로 도달한 노드)을 루트로 올립니다.<span class="en">Splays <code>val</code> within the left subtree. Since every value there is smaller than the deleted value, the target is absent; the maximum node in that subtree is brought to the root.</span></td></tr>
+<tr><td><code>new_root["right"] = right_subtree</code></td><td>왼쪽 서브트리의 최댓값이 새 루트가 되었으므로, 보관해 둔 오른쪽 서브트리를 그 오른쪽에 연결합니다. BST의 정렬 순서가 유지됩니다.<span class="en">Attaches the saved right subtree to the right of the new root, preserving BST ordering.</span></td></tr>
+<tr><td><code>return new_root</code></td><td>삭제가 끝난 새 트리의 루트를 반환합니다.<span class="en">Returns the root of the resulting tree.</span></td></tr>
+</table>
+<div class="callout">
+<strong>삭제의 핵심 / Key Idea of Deletion</strong>
+<p>삭제할 노드를 먼저 루트로 올린 뒤 제거합니다. 왼쪽 서브트리가 있으면 그 안의 최댓값을 새 루트로 올리고, 원래 오른쪽 서브트리를 새 루트의 오른쪽에 연결합니다.</p>
+<p class="en">First bring the node to delete to the root. If a left subtree exists, bring its maximum node to the root, then attach the original right subtree to that new root's right side.</p>
+</div>
+
+<h2>8. 트리 출력 함수 / Tree Display Function</h2>
+<pre><code>def print_tree(node, depth=0, side="Root"):
+    if node is not None:
+        print("   " * depth + f"[{side}] {node['val']}")
+        print_tree(node["left"], depth + 1, "Left")
+        print_tree(node["right"], depth + 1, "Right")</code></pre>
+<table>
+<tr><th>코드 / Code</th><th>상세 설명 / Detailed Explanation</th></tr>
+<tr><td><code>def print_tree(node, depth=0, side="Root"):</code></td><td>트리 구조를 들여쓰기로 출력합니다. <code>depth</code>는 깊이, <code>side</code>는 현재 노드의 위치를 나타냅니다. 기본값은 루트입니다.<span class="en">Prints the tree with indentation. <code>depth</code> indicates the level, and <code>side</code> identifies the node position. The default position is Root.</span></td></tr>
+<tr><td><code>if node is not None:</code></td><td>현재 노드가 존재할 때만 출력하고 자식으로 이동합니다.<span class="en">Processes the node only when it is not <code>None</code>.</span></td></tr>
+<tr><td><code>print("   " * depth + f"[{side}] {node['val']}")</code></td><td>깊이만큼 공백을 반복해 계층을 표현하고, 위치와 노드 값을 출력합니다. 깊이가 2라면 공백 문자열 세 칸을 두 번 반복합니다.<span class="en">Repeats three spaces for each depth level, then prints the side label and node value.</span></td></tr>
+<tr><td><code>print_tree(node["left"], depth + 1, "Left")</code></td><td>왼쪽 자식을 재귀적으로 출력합니다. 깊이를 1 증가시키고 위치를 Left로 표시합니다.<span class="en">Recursively prints the left child one level deeper, labeled Left.</span></td></tr>
+<tr><td><code>print_tree(node["right"], depth + 1, "Right")</code></td><td>오른쪽 자식을 재귀적으로 출력합니다. 깊이를 1 증가시키고 위치를 Right로 표시합니다.<span class="en">Recursively prints the right child one level deeper, labeled Right.</span></td></tr>
+</table>
+
+<h2>9. 실행 예제 / Example Usage</h2>
+<h3>9-1. 초기 삽입 / Initial Insertions</h3>
+<pre><code>tree = None
+numbers = [30, 20, 40, 35]
+
+for num in numbers:
+    tree = insert(tree, num)</code></pre>
+<ul>
+<li><code>tree = None</code>: 처음에는 노드가 없는 빈 트리입니다.<span class="en">Starts with an empty tree.</span></li>
+<li><code>numbers = [30, 20, 40, 35]</code>: 삽입할 값을 리스트로 준비합니다.<span class="en">Stores the insertion sequence in a list.</span></li>
+<li><code>for num in numbers:</code>: 리스트의 값을 앞에서부터 하나씩 꺼냅니다.<span class="en">Iterates through the values in order.</span></li>
+<li><code>tree = insert(tree, num)</code>: 값을 삽입하고, 새 루트를 다시 <code>tree</code>에 저장합니다.<span class="en">Inserts the value and updates the root reference.</span></li>
+</ul>
+<h4>삽입 과정의 트리 변화 / Tree Changes During Insertion</h4>
+<div class="diagram"><pre>insert 30:
+  30
+
+insert 20:
+  20
+    \
+     30
+
+insert 40:
+     40
+    /
+   30
+  /
+ 20
+
+insert 35:
+       35
+      /  \
+    30    40
+   /
+  20</pre></div>
+<p class="small">설명: 각 삽입 직전에 Splay를 수행하므로, 매 삽입 후 새 값이 루트가 됩니다. / Each insertion first splays the value or its nearest node, so the inserted value becomes the root.</p>
+
+<h3>9-2. 검색 / Search</h3>
+<pre><code>print("--- 2. After searching 20 (20 moves to Root) ---")
+tree = search(tree, 20)
+print_tree(tree)</code></pre>
+<p>현재 루트는 35입니다. 20은 35보다 작고 왼쪽 자식 30보다도 작으므로 Left-Left 방향입니다. 재귀 탐색 후 오른쪽 회전이 두 번 적용되어 20이 루트가 됩니다.</p>
+<p class="en">The current root is 35. Since 20 is smaller than both 35 and its left child 30, this is a Left-Left case. Recursive splaying and right rotations move 20 to the root.</p>
+<div class="diagram"><pre>검색 전 / Before search       검색 후 / After search
+
+       35                           20
+      /  \                            \
+    30    40                           30
+   /                                  /  \
+  20                                 35   40</pre></div>
+
+<h3>9-3. 삭제 / Delete</h3>
+<pre><code>print("--- 3. After deleting 35 ---")
+tree = delete(tree, 35)
+print_tree(tree)</code></pre>
+<p>검색 후 트리는 루트 20, 오른쪽 서브트리 30(오른쪽 자식 35, 40) 형태입니다. 삭제 함수는 먼저 35를 루트로 Splay한 다음 삭제합니다. 삭제할 노드의 왼쪽 서브트리에는 30이 있고, 오른쪽 서브트리에는 40이 남습니다. 왼쪽 서브트리의 최댓값 30을 새 루트로 올리고 40을 오른쪽에 연결합니다.</p>
+<p class="en">After the search, the root is 20 and its right subtree contains 30, 35, and 40. The delete function first splays 35 to the root and removes it. The left subtree contains 30 and the right subtree contains 40. It brings the maximum of the left subtree (30) to the root and attaches 40 on the right.</p>
+<div class="diagram"><pre>삭제 직전 / Before deletion     삭제 후 / After deletion
+
+       35                           30
+      /  \                            \
+    20    40                           40
+      \
+       30</pre></div>
+
+<h2>10. 전체 코드 / Complete Code</h2>
+<p>아래 코드는 질문에 제공된 전체 코드입니다. 위의 설명과 함께 실행하며 각 단계의 트리 모양을 확인할 수 있습니다.</p>
+<p class="en">The complete program below follows the code supplied in the question. Run it alongside the explanations to inspect the tree after each operation.</p>
+<details>
+<summary>전체 Python 코드 펼치기 / Expand Complete Python Code</summary>
+<pre><code>def create_node(val):
+    return {"val": val, "left": None, "right": None}
+
+
+def rotate_right(node):
+    new_root = node["left"]
+    node["left"] = new_root["right"]
+    new_root["right"] = node
+    return new_root
+
+
+def rotate_left(node):
+    new_root = node["right"]
+    node["right"] = new_root["left"]
+    new_root["left"] = node
+    return new_root
+
+
+def splay(root, target):
+    if root is None or root["val"] == target:
+        return root
+
+    if target &lt; root["val"]:
+        if root["left"] is None:
+            return root
+
+        if target &lt; root["left"]["val"]:
+            root["left"]["left"] = splay(root["left"]["left"], target)
+            root = rotate_right(root)
+
+        elif target &gt; root["left"]["val"]:
+            root["left"]["right"] = splay(root["left"]["right"], target)
+            if root["left"]["right"] is not None:
+                root["left"] = rotate_left(root["left"])
+
+        return root if root["left"] is None else rotate_right(root)
+
+    else:
+        if root["right"] is None:
+            return root
+
+        if target &lt; root["right"]["val"]:
+            root["right"]["left"] = splay(root["right"]["left"], target)
+            if root["right"]["left"] is not None:
+                root["right"] = rotate_right(root["right"])
+
+        elif target &gt; root["right"]["val"]:
+            root["right"]["right"] = splay(root["right"]["right"], target)
+            root = rotate_left(root)
+
+        return root if root["right"] is None else rotate_left(root)
+
+
+def search(root, target):
+    return splay(root, target)
+
+
+def insert(root, val):
+    if root is None:
+        return create_node(val)
+
+    root = splay(root, val)
+
+    if root["val"] == val:
+        return root
+
+    new_node = create_node(val)
+
+    if val &lt; root["val"]:
+        new_node["right"] = root
+        new_node["left"] = root["left"]
+        root["left"] = None
+    else:
+        new_node["left"] = root
+        new_node["right"] = root["right"]
+        root["right"] = None
+
+    return new_node
+
+
+def delete(root, val):
+    if root is None:
+        return None
+
+    root = splay(root, val)
+
+    if root["val"] != val:
+        return root
+
+    if root["left"] is None:
+        return root["right"]
+    else:
+        right_subtree = root["right"]
+        new_root = splay(root["left"], val)
+        new_root["right"] = right_subtree
+        return new_root
+
+
+def print_tree(node, depth=0, side="Root"):
+    if node is not None:
+        print("   " * depth + f"[{side}] {node['val']}")
+        print_tree(node["left"], depth + 1, "Left")
+        print_tree(node["right"], depth + 1, "Right")
+
+
+tree = None
+numbers = [30, 20, 40, 35]
+
+for num in numbers:
+    tree = insert(tree, num)
+
+print("--- 1. After inserting 30, 20, 40, 35 (35 becomes Root) ---")
+print_tree(tree)
+
+print("\\n--- 2. After searching 20 (20 moves to Root) ---")
+tree = search(tree, 20)
+print_tree(tree)
+
+print("\\n--- 3. After deleting 35 ---")
+tree = delete(tree, 35)
+print_tree(tree)</code></pre>
+</details>
+
+<h2>11. 핵심 정리 / Summary</h2>
+<table>
+<tr><th>함수 / Function</th><th>핵심 역할 / Main Role</th></tr>
+<tr><td><code>create_node()</code></td><td>딕셔너리 형태의 새 노드 생성 / Creates a dictionary-based node.</td></tr>
+<tr><td><code>rotate_right()</code></td><td>왼쪽 자식을 위로 올림 / Promotes the left child.</td></tr>
+<tr><td><code>rotate_left()</code></td><td>오른쪽 자식을 위로 올림 / Promotes the right child.</td></tr>
+<tr><td><code>splay()</code></td><td>목표 또는 가장 가까운 노드를 루트로 이동 / Moves the target or closest node to the root.</td></tr>
+<tr><td><code>search()</code></td><td>검색 후 Splay된 루트 반환 / Returns the root after splaying.</td></tr>
+<tr><td><code>insert()</code></td><td>새 값을 루트로 삽입 / Inserts a new value as the root.</td></tr>
+<tr><td><code>delete()</code></td><td>대상을 루트로 이동한 뒤 제거 / Splays the target to the root, then removes it.</td></tr>
+<tr><td><code>print_tree()</code></td><td>들여쓰기로 트리 구조 출력 / Displays the tree structure using indentation.</td></tr>
+</table>
+<div class="callout good">
+<strong>가장 중요한 한 문장 / The Most Important Takeaway</strong>
+<p>Splay Tree는 “최근에 접근한 노드를 루트로 올려 다음 접근을 빠르게 할 가능성을 높이는 트리”입니다.</p>
+<p class="en">A Splay Tree moves recently accessed nodes toward the root, increasing the chance that subsequent accesses will be faster.</p>
+</div>
+<p class="small">참고: 이 예제의 출력은 질문에 제공된 코드의 구조와 실행 흐름을 기준으로 설명했습니다. Splay Tree의 개별 연산은 최악의 경우 O(n)일 수 있지만, 연속된 연산의 상각 시간 복잡도는 O(log n)입니다.</p>
+<p class="en small">Note: The walkthrough follows the structure and execution flow of the supplied code. A single Splay Tree operation can take O(n) in the worst case, while the amortized time per operation over a sequence is O(log n).</p>
+</main>
+</body>
+</html>
