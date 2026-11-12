@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BST · AVL · Red-Black Tree 응용 문제 | Python · Korean & English</title>
+<style>
+:root{--bg:#14161c;--panel:#1c1f27;--line:#2e333f;--text:#e8e6df;--sub:#a3a8b5;--amber:#f0a93b;--teal:#4fc3a1}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;line-height:1.8;font-size:16px}
+main{max-width:920px;margin:0 auto;padding:42px 20px 90px}
+h1{font-size:30px;line-height:1.35;margin:0 0 8px}
+h2{font-size:24px;margin:52px 0 12px;padding-top:16px;border-top:1px solid var(--line)}
+h3{font-size:18px;margin:25px 0 6px}
+p{margin:0 0 12px;max-width:78ch}
+.lead{color:var(--sub);font-size:17px}
+.en{color:var(--sub);font-size:.94em;margin-top:-7px}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--panel);padding:1px 6px;border-radius:4px;font-size:.9em}
+.box{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:4px 10px 10px 4px;padding:14px 20px;margin:14px 0}
+.box.ok{border-left-color:var(--teal)}
+pre{background:#0f1116;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;font-size:13.5px;line-height:1.6;margin:10px 0}
+pre code{background:none;padding:0}
+pre.out{border-left:4px solid var(--teal)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;margin:12px 0}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}th{background:var(--panel)}
+details{margin:10px 0}summary{cursor:pointer;color:var(--amber);padding:4px 0}
+ul{margin:0 0 12px;padding-left:22px;max-width:80ch}
+.ko,.enline{display:block}
+.enline{color:var(--sub);font-size:.93em;margin-top:1px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 26px}
+button{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:7px 12px;cursor:pointer}
+button.active{border-color:var(--amber);color:var(--amber)}
+body.only-ko .enline{display:none}
+body.only-en .ko{display:none}
+@media(max-width:600px){body{font-size:15px}h1{font-size:25px}h2{font-size:21px}main{padding:28px 15px 70px}}
+</style>
+</head>
+<body><main>
+<h1>BST · AVL · Red-Black Tree 응용 문제</h1>
+<p class="lead ko">생활 속 상황으로 풀어 보는 세 문제입니다. 모든 구현 코드는 C언어에서 Python으로 변환했습니다.</p>
+<p class="lead enline">Three practical problems based on everyday situations. All implementation code has been converted from C to Python.</p>
+<div class="toolbar">
+<button class="active" onclick="setLang('both',this)">한글 + English</button>
+<button onclick="setLang('ko',this)">한글만</button>
+<button onclick="setLang('en',this)">English only</button>
+</div>
+<table>
+<tr><th>문제 / Problem</th><th>트리 / Tree</th><th>배우는 점 / What You Learn</th></tr>
+<tr><td>1. 출석부 검색<br><span class="enline">Attendance lookup</span></td><td>BST</td><td>삽입, 검색, 중위 순회(정렬 출력)<br><span class="enline">Insertion, search, and inorder traversal (sorted output)</span></td></tr>
+<tr><td>2. 번호표 순서대로 입력<br><span class="enline">Sequential ticket insertion</span></td><td>AVL</td><td>BST의 편향 문제와 회전으로 균형 유지<br><span class="enline">BST degeneration and balancing through rotations</span></td></tr>
+<tr><td>3. 영화관 좌석 예약<br><span class="enline">Movie theater seat reservation</span></td><td>Red-Black (LLRB)</td><td>중복 예약 방지, 색 규칙으로 균형 유지<br><span class="enline">Preventing duplicate reservations and maintaining balance with color rules</span></td></tr>
+</table>
+
+<h2>문제 1. 출석번호로 학생 찾기 <span class="en">(BST)</span></h2>
+<div class="box">
+<p class="ko">선생님이 출석번호와 이름을 입력하면 번호 순서대로 출석부를 출력하고, 번호로 학생 이름을 찾는 프로그램을 만드세요. 이미 있는 번호는 무시합니다.</p>
+<p class="enline">Write a program that stores student ID numbers and names, prints the attendance list in ID order, and searches for a student by ID. Ignore IDs that already exist.</p>
+</div>
+<h3>입력과 출력 예시 / Sample Input and Output</h3>
+<ul>
+<li>입력 / Input: <code>15 민준, 8 서연, 22 지호, 4 하윤, 11 도윤</code></li>
+<li>찾기 / Search: <code>11, 7</code></li>
+<li>출력 / Output: 번호 순서대로 출석부, 11번은 도윤, 7번은 없음<br><span class="enline">Attendance list in ascending order; ID 11 is Doyun, and ID 7 does not exist.</span></li>
+</ul>
+<h3>힌트 / Hints</h3>
+<ul>
+<li>왼쪽 자식은 부모보다 작은 번호, 오른쪽 자식은 큰 번호입니다.<br><span class="enline">The left child has a smaller ID than its parent; the right child has a larger ID.</span></li>
+<li>중위 순회 <code>inorder: left, root, right</code>를 하면 번호가 작은 것부터 출력됩니다.<br><span class="enline">Inorder traversal (left, root, right) prints IDs from smallest to largest.</span></li>
+</ul>
+<details><summary>풀이 코드 보기 / View Solution Code (p1.py)</summary>
+<pre><code>class Node:
+    def __init__(self, student_id, name):
+        self.student_id = student_id
+        self.name = name
+        self.left = None
+        self.right = None
+
+
+def insert(root, student_id, name):
+    if root is None:
+        return Node(student_id, name)
+
+    if student_id &lt; root.student_id:
+        root.left = insert(root.left, student_id, name)
+    elif student_id &gt; root.student_id:
+        root.right = insert(root.right, student_id, name)
+    # 같은 ID이면 아무 작업도 하지 않아 중복을 무시합니다.
+    return root
+
+
+def search(root, student_id):
+    while root is not None:
+        if student_id == root.student_id:
+            return root
+        if student_id &lt; root.student_id:
+            root = root.left
+        else:
+            root = root.right
+    return None
+
+
+def inorder(root):
+    if root is None:
+        return
+    inorder(root.left)
+    print(f"{root.student_id}번 {root.name}")
+    inorder(root.right)
+
+
+# 메인 프로그램 / Main program
+root = None
+students = [
+    (15, "민준"),
+    (8, "서연"),
+    (22, "지호"),
+    (4, "하윤"),
+    (11, "도윤"),
+]
+
+for student_id, name in students:
+    root = insert(root, student_id, name)
+
+print("[출석부]")
+inorder(root)
+
+for student_id in [11, 7]:
+    result = search(root, student_id)
+    if result:
+        print(f"{student_id}번은 {result.name}입니다.")
+    else:
+        print(f"{student_id}번 학생은 없습니다.")</code></pre>
+<pre class="out"><code>[출석부]
+4번 하윤
+8번 서연
+11번 도윤
+15번 민준
+22번 지호
+11번은 도윤입니다.
+7번 학생은 없습니다.</code></pre>
+</details>
+<h3>생각해 볼 문제 / Think About It</h3>
+<ul>
+<li>번호를 <code>15, 8, 22, 4, 11</code> 대신 <code>4, 8, 11, 15, 22</code> 순서로 넣으면 트리 모양이 어떻게 될까요? (문제 2로 연결)<br><span class="enline">What will the tree look like if you insert 4, 8, 11, 15, 22 instead of 15, 8, 22, 4, 11? (This leads to Problem 2.)</span></li>
+<li>가장 작은 번호와 가장 큰 번호를 찾는 함수를 만들어 보세요.<br><span class="enline">Write functions that find the smallest and largest IDs.</span></li>
+</ul>
+
+<h2>문제 2. 번호표를 순서대로 넣으면? <span class="en">(AVL)</span></h2>
+<div class="box">
+<p class="ko">은행 번호표 1번부터 15번까지가 차례로 들어옵니다. 일반 BST와 AVL 트리에 똑같이 넣고, 트리 높이와 15번을 찾을 때 비교한 횟수를 비교하세요.</p>
+<p class="enline">A bank issues ticket numbers from 1 through 15 in ascending order. Insert the same sequence into a regular BST and an AVL tree, then compare their heights and the number of comparisons needed to find ticket 15.</p>
+</div>
+<h3>입력과 출력 예시 / Sample Input and Output</h3>
+<ul>
+<li>입력 / Input: <code>1, 2, 3, ..., 15</code> (오름차순 / ascending order)</li>
+<li>출력 / Output: 각 트리의 높이와 15번 검색 비교 횟수<br><span class="enline">The height of each tree and the number of comparisons required to search for 15.</span></li>
+</ul>
+<h3>힌트 / Hints</h3>
+<ul>
+<li>BST에 오름차순으로 넣으면 오른쪽 자식만 생겨 연결 리스트처럼 됩니다.<br><span class="enline">Inserting ascending values into a BST creates only right children, making it resemble a linked list.</span></li>
+<li>AVL은 왼쪽과 오른쪽 높이 차이(균형 값)가 2가 되면 회전 <code>rotation</code>으로 고칩니다.<br><span class="enline">An AVL tree uses rotations when the height difference between the left and right subtrees becomes 2.</span></li>
+<li>균형 값이 1보다 크면 왼쪽이 높고, -1보다 작으면 오른쪽이 높습니다.<br><span class="enline">A balance factor greater than 1 means the left side is taller; less than -1 means the right side is taller.</span></li>
+</ul>
+<details><summary>풀이 코드 보기 / View Solution Code (p2.py)</summary>
+<pre><code>class Node:
+    def __init__(self, key):
+        self.key = key
+        self.height = 1
+        self.left = None
+        self.right = None
+
+
+def height(node):
+    return node.height if node else 0
+
+
+def update(node):
+    node.height = 1 + max(height(node.left), height(node.right))
+
+
+def rotate_right(y):
+    x = y.left
+    y.left = x.right
+    x.right = y
+    update(y)
+    update(x)
+    return x
+
+
+def rotate_left(x):
+    y = x.right
+    x.right = y.left
+    y.left = x
+    update(x)
+    update(y)
+    return y
+
+
+def bst_insert(root, key):
+    if root is None:
+        return Node(key)
+    if key &lt; root.key:
+        root.left = bst_insert(root.left, key)
+    elif key &gt; root.key:
+        root.right = bst_insert(root.right, key)
+    update(root)
+    return root
+
+
+def avl_insert(root, key):
+    if root is None:
+        return Node(key)
+
+    if key &lt; root.key:
+        root.left = avl_insert(root.left, key)
+    elif key &gt; root.key:
+        root.right = avl_insert(root.right, key)
+    else:
+        return root
+
+    update(root)
+    balance = height(root.left) - height(root.right)
+
+    # 왼쪽이 너무 높은 경우 / Left-heavy
+    if balance &gt; 1:
+        if key &gt; root.left.key:       # LR case
+            root.left = rotate_left(root.left)
+        return rotate_right(root)     # LL case
+
+    # 오른쪽이 너무 높은 경우 / Right-heavy
+    if balance &lt; -1:
+        if key &lt; root.right.key:      # RL case
+            root.right = rotate_right(root.right)
+        return rotate_left(root)      # RR case
+
+    return root
+
+
+def search_steps(root, key):
+    count = 0
+    while root:
+        count += 1
+        if key == root.key:
+            return count
+        root = root.left if key &lt; root.key else root.right
+    return count
+
+
+# 메인 프로그램 / Main program
+bst = None
+avl = None
+
+for number in range(1, 16):
+    bst = bst_insert(bst, number)
+    avl = avl_insert(avl, number)
+
+print(f"BST: 높이 {height(bst)}, 15번 찾기 {search_steps(bst, 15)}번 비교")
+print(f"AVL: 높이 {height(avl)}, 15번 찾기 {search_steps(avl, 15)}번 비교")</code></pre>
+<pre class="out"><code>BST: 높이 15, 15번 찾기 15번 비교
+AVL: 높이 4, 15번 찾기 4번 비교</code></pre>
+</details>
+<div class="box ok">
+<p class="ko">BST는 15번을 찾으려고 15번 비교해야 하지만 AVL은 4번이면 됩니다. 데이터가 100만 개라면 BST는 최악 100만 번, AVL은 약 20번입니다.</p>
+<p class="enline">The BST needs 15 comparisons to find 15, while the AVL tree needs only 4. With one million values, the worst case for a BST can require one million comparisons, while an AVL tree needs about 20.</p>
+</div>
+<h3>생각해 볼 문제 / Think About It</h3>
+<ul>
+<li>숫자를 <code>15, 14, 13, ..., 1</code> (내림차순)로 넣으면 어떤 회전이 일어날까요?<br><span class="enline">Which rotations occur if you insert 15, 14, 13, ..., 1 in descending order?</span></li>
+<li><code>1, 3, 2</code> 순서로 넣으면 LR 회전이 필요한 이유를 그림으로 그려 보세요.<br><span class="enline">Draw a diagram explaining why an LR rotation is required when inserting 1, 3, 2.</span></li>
+</ul>
+
+<h2>문제 3. 영화관 좌석 예약 <span class="en">(Red-Black Tree)</span></h2>
+<div class="box">
+<p class="ko">좌석 번호로 예약 요청이 들어옵니다. 이미 예약된 좌석이면 "이미 예약됨"을 출력하고, 마지막에 예약된 좌석을 번호 순서로 출력하세요. 각 노드의 색도 함께 출력합니다.</p>
+<p class="enline">Seat reservation requests arrive as seat numbers. If a seat has already been reserved, print “Already reserved.” At the end, print all reserved seats in ascending order, including each node's color.</p>
+</div>
+<h3>입력과 출력 예시 / Sample Input and Output</h3>
+<ul>
+<li>입력 / Input: <code>10, 20, 30, 40, 50, 25, 30</code></li>
+<li>출력 / Output: 각 요청의 결과, 30번은 두 번째 요청에서 중복<br><span class="enline">The result of each request; the second request for seat 30 is a duplicate.</span></li>
+</ul>
+<h3>힌트 / Hints</h3>
+<ul>
+<li>새 노드는 항상 빨강으로 넣습니다.<br><span class="enline">A newly inserted node is always red.</span></li>
+<li>오른쪽이 빨강이면 왼쪽 회전, 왼쪽에 빨강이 연속이면 오른쪽 회전, 양쪽이 모두 빨강이면 색 뒤집기 <code>color flip</code>를 합니다.<br><span class="enline">If the right link is red, rotate left. If two consecutive left links are red, rotate right. If both children are red, flip colors.</span></li>
+<li>삽입이 끝나면 루트를 검정으로 칠합니다.<br><span class="enline">After each insertion, color the root black.</span></li>
+</ul>
+<details><summary>풀이 코드 보기 / View Solution Code (p3.py)</summary>
+<pre><code>RED = "R"
+BLACK = "B"
+
+
+class Node:
+    def __init__(self, seat, color=RED):
+        self.seat = seat
+        self.color = color
+        self.left = None
+        self.right = None
+
+
+def is_red(node):
+    return node is not None and node.color == RED
+
+
+def rotate_left(h):
+    # 오른쪽의 빨간 링크를 왼쪽으로 이동
+    # Move a red link from the right to the left
+    x = h.right
+    h.right = x.left
+    x.left = h
+    x.color = h.color
+    h.color = RED
+    return x
+
+
+def rotate_right(h):
+    x = h.left
+    h.left = x.right
+    x.right = h
+    x.color = h.color
+    h.color = RED
+    return x
+
+
+def flip_colors(h):
+    # 업로드된 C 코드와 같은 색 변경 규칙
+    # Use the same color assignment as the original C code
+    h.color = RED
+    h.left.color = BLACK
+    h.right.color = BLACK
+
+
+def insert(h, seat):
+    if h is None:
+        return Node(seat), False
+
+    duplicate = False
+    if seat &lt; h.seat:
+        h.left, duplicate = insert(h.left, seat)
+    elif seat &gt; h.seat:
+        h.right, duplicate = insert(h.right, seat)
+    else:
+        return h, True
+
+    # LLRB insertion fix-up rules
+    if is_red(h.right) and not is_red(h.left):
+        h = rotate_left(h)
+    if is_red(h.left) and is_red(h.left.left):
+        h = rotate_right(h)
+    if is_red(h.left) and is_red(h.right):
+        flip_colors(h)
+
+    return h, duplicate
+
+
+def inorder(h):
+    if h is None:
+        return
+    inorder(h.left)
+    print(f"{h.seat}({h.color})", end=" ")
+    inorder(h.right)
+
+
+# 메인 프로그램 / Main program
+requests = [10, 20, 30, 40, 50, 25, 30]
+root = None
+
+for seat in requests:
+    root, duplicate = insert(root, seat)
+    root.color = BLACK  # 루트는 항상 검정 / The root is always black
+    if duplicate:
+        print(f"{seat}번 좌석은 이미 예약됨")
+    else:
+        print(f"{seat}번 좌석 예약 완료")
+
+print("예약 목록: ", end="")
+inorder(root)
+print()</code></pre>
+<pre class="out"><code>10번 좌석 예약 완료
+20번 좌석 예약 완료
+30번 좌석 예약 완료
+40번 좌석 예약 완료
+50번 좌석 예약 완료
+25번 좌석 예약 완료
+30번 좌석은 이미 예약됨
+예약 목록: 10(B) 20(R) 25(R) 30(B) 40(B) 50(B)</code></pre>
+</details>
+<div class="box ok">
+<p class="ko">이 코드는 Red-Black Tree를 간단하게 구현하는 Left-Leaning Red-Black Tree(LLRB)입니다. 빨간 노드를 항상 왼쪽에만 두도록 제한해서 삽입 수정 규칙을 세 가지로 정리합니다. 루트 검정, 빨강 연속 금지, 검정 높이 동일 규칙은 일반 Red-Black Tree와 같습니다.</p>
+<p class="enline">This code uses a Left-Leaning Red-Black Tree (LLRB), a simplified form of a Red-Black Tree. By requiring red links to lean left, insertion fix-up can be expressed with three rules. Its core properties—black root, no consecutive red links, and equal black height—are the same as those of a conventional Red-Black Tree.</p>
+</div>
+<h3>생각해 볼 문제 / Think About It</h3>
+<ul>
+<li>예약 결과를 직접 손으로 그려 보고 출력의 색과 맞는지 확인해 보세요. (루트는 40, 왼쪽 20은 빨강)<br><span class="enline">Draw the resulting reservation tree by hand and compare its node colors with the output. (The root is 40, and its left child 20 is red.)</span></li>
+<li>예약 취소 기능(삭제)을 넣으려면 지난 자료의 DB 개념이 필요합니다.<br><span class="enline">Adding a cancellation feature (deletion) requires the database concepts covered in the previous material.</span></li>
+</ul>
+
+<h2>어떤 트리를 언제 쓸까? / Which Tree Should You Use?</h2>
+<table>
+<tr><th>트리 / Tree</th><th>장점 / Advantages</th><th>단점 / Disadvantages</th><th>어울리는 곳 / Suitable Use Cases</th></tr>
+<tr><td>BST</td><td>가장 간단<br><span class="enline">Simplest to implement</span></td><td>입력 순서에 따라 일자로 늘어남<br><span class="enline">Can become skewed depending on insertion order</span></td><td>데이터가 무작위이고 적을 때<br><span class="enline">Small datasets with relatively random input</span></td></tr>
+<tr><td>AVL</td><td>검색이 빠름 (엄격한 균형)<br><span class="enline">Fast lookup (strict balancing)</span></td><td>삽입과 삭제 때 회전이 많음<br><span class="enline">More rotations during insertion and deletion</span></td><td>검색이 훨씬 많은 사전, 색인<br><span class="enline">Dictionaries and indexes with frequent searches</span></td></tr>
+<tr><td>Red-Black</td><td>삽입과 삭제가 고르게 빠름<br><span class="enline">Consistently efficient insertion and deletion</span></td><td>구현이 복잡함<br><span class="enline">More complex implementation</span></td><td>C++ <code>std::map</code>, 리눅스 커널 등<br><span class="enline">C++ <code>std::map</code>, the Linux kernel, and similar systems</span></td></tr>
+</table>
+</main>
+<script>
+function setLang(mode,button){
+  document.body.classList.remove('only-ko','only-en');
+  if(mode==='ko') document.body.classList.add('only-ko');
+  if(mode==='en') document.body.classList.add('only-en');
+  document.querySelectorAll('.toolbar button').forEach(b=>b.classList.remove('active'));
+  button.classList.add('active');
+}
+</script>
+</body></html>
