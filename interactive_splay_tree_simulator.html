@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interactive Splay Tree Simulator</title>
+<style>
+:root{
+  --bg:#0d1118;--panel:#171e29;--panel2:#202a38;--line:#344154;
+  --text:#edf2fa;--muted:#aab7c8;--blue:#70baff;--gold:#f2bd5b;
+  --green:#59d6a5;--red:#ff8585;--purple:#c5a5ff;--shadow:0 12px 35px #0005;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 20% 0%,#1a2636 0%,var(--bg) 48%);color:var(--text);font-family:Inter,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;line-height:1.55}
+main{max-width:1440px;margin:auto;padding:28px 22px 60px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:22px}
+h1{font-size:clamp(25px,3vw,36px);margin:0 0 6px;line-height:1.2}
+.subtitle{color:var(--muted);margin:0}
+.en{display:block;color:var(--muted);font-size:.9em;margin-top:2px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+button,input{font:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#263448;color:var(--text);border-radius:9px;padding:9px 13px;font-weight:650;transition:.15s}
+button:hover{filter:brightness(1.16);transform:translateY(-1px)}
+button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+button.primary{background:#1767a8;border-color:#328bd1}
+button.success{background:#12694f;border-color:#2c9b78}
+button.danger{background:#71333b;border-color:#a64e59}
+button.subtle{background:#202a38}
+.layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,.85fr);gap:18px;align-items:start}
+.panel{background:linear-gradient(180deg,#1a2330,#151c26);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);overflow:hidden}
+.panel-head{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center}
+.panel-head h2{font-size:17px;margin:0}
+.panel-body{padding:17px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.control-group{background:#111923;border:1px solid #2d394b;border-radius:11px;padding:12px}
+.control-group label{display:block;font-size:13px;color:var(--muted);margin-bottom:7px}
+.input-row{display:flex;gap:7px}
+input{min-width:0;width:100%;background:#0b1119;border:1px solid #3b4a60;border-radius:8px;color:var(--text);padding:9px 10px;outline:none}
+input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #70baff22}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.quick button{font-size:12px;padding:5px 8px}
+.tree-wrap{margin-top:15px;background:linear-gradient(180deg,#0b1119,#101722);border:1px solid #2c394b;border-radius:12px;min-height:390px;position:relative;overflow:auto}
+.tree-toolbar{position:sticky;top:0;z-index:2;background:#101722eF;border-bottom:1px solid #2a3647;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+#treeSvg{display:block;width:100%;min-width:560px;height:350px}
+.node circle{fill:#1b3855;stroke:#77bfff;stroke-width:2.5}
+.node text{fill:#f5f8ff;font-size:14px;font-weight:750;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.node.root circle{fill:#70501b;stroke:#ffd078;stroke-width:3.5}
+.node.active circle{fill:#145c48;stroke:#65e2b2;stroke-width:4}
+.edge{stroke:#718198;stroke-width:2.2;fill:none}
+.edge.active{stroke:#62d6ad;stroke-width:3.2}
+.empty{fill:#91a0b4;font-size:17px;text-anchor:middle}
+.legend{display:flex;gap:15px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:10px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{background:#111923;border:1px solid #2d394b;border-radius:10px;padding:10px}
+.stat b{display:block;font-size:21px;color:var(--gold);font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--muted)}
+.side-stack{display:grid;gap:15px}
+.operation-status{padding:12px 14px;border-radius:10px;background:#102235;border:1px solid #285277;color:#cce8ff;font-size:13px}
+.operation-status.good{background:#10291f;border-color:#28664f;color:#c7f5e2}
+.operation-status.warn{background:#30221a;border-color:#76522c;color:#ffe0b2}
+.log{height:260px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.log-item{background:#101823;border:1px solid #29374a;border-radius:9px;padding:9px 10px;font-size:13px}
+.log-item strong{color:var(--gold);display:block;margin-bottom:2px}
+.log-item small{color:var(--muted);display:block}
+.log-item.active{border-color:#4fba91;background:#10251f}
+.code{background:#0b1017;border:1px solid #2c394b;border-radius:10px;padding:12px;font:12px/1.7 ui-monospace,Consolas,monospace;color:#d5e4f5;overflow:auto;white-space:pre}
+.explain-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+.info-card{background:#151e2a;border:1px solid var(--line);border-radius:12px;padding:13px}
+.info-card b{color:var(--blue);display:block;margin-bottom:5px}
+.info-card p{font-size:12px;color:var(--muted);margin:0}
+.footer-note{margin-top:16px;color:var(--muted);font-size:12px}
+kbd{background:#283547;border:1px solid #40516a;border-radius:5px;padding:1px 5px;color:#e5edf8}
+@media(max-width:950px){.layout{grid-template-columns:1fr}.explain-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:580px){main{padding:18px 12px 40px}header{display:block}.top-actions{margin-top:12px}.controls{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}.explain-grid{grid-template-columns:1fr}.tree-wrap{min-height:300px}#treeSvg{height:300px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <h1>Interactive Splay Tree Simulator</h1>
+    <p class="subtitle">삽입 · 검색 · 삭제 · 회전 과정을 직접 실행하고 트리의 변화를 확인하세요.</p>
+    <span class="en">Insert, search, delete, and watch how splaying changes the tree structure.</span>
+  </div>
+  <div class="top-actions">
+    <button class="subtle" id="sampleBtn">예제 불러오기 / Load Example</button>
+    <button class="subtle" id="resetBtn">초기화 / Reset</button>
+  </div>
+</header>
+
+<div class="layout">
+  <section class="panel">
+    <div class="panel-head">
+      <h2>트리 조작 / Tree Operations</h2>
+      <span style="font-size:12px;color:var(--muted)">BST + Splay rotations</span>
+    </div>
+    <div class="panel-body">
+      <div class="controls">
+        <div class="control-group">
+          <label for="insertValue">삽입할 값 / Value to insert</label>
+          <div class="input-row"><input id="insertValue" type="number" placeholder="예: 30"><button class="primary" id="insertBtn">삽입 / Insert</button></div>
+        </div>
+        <div class="control-group">
+          <label for="searchValue">검색할 값 / Value to search</label>
+          <div class="input-row"><input id="searchValue" type="number" placeholder="예: 20"><button class="success" id="searchBtn">검색 / Search</button></div>
+        </div>
+        <div class="control-group">
+          <label for="deleteValue">삭제할 값 / Value to delete</label>
+          <div class="input-row"><input id="deleteValue" type="number" placeholder="예: 35"><button class="danger" id="deleteBtn">삭제 / Delete</button></div>
+        </div>
+        <div class="control-group">
+          <label for="sequenceInput">여러 값 한 번에 삽입 / Insert a sequence</label>
+          <div class="input-row"><input id="sequenceInput" type="text" placeholder="30, 20, 40, 35"><button id="sequenceBtn">실행 / Run</button></div>
+          <div class="quick">
+            <button data-seq="30, 20, 40, 35">30, 20, 40, 35</button>
+            <button data-seq="8, 18, 5, 15, 17, 25">8, 18, 5, 15, 17, 25</button>
+            <button data-seq="50, 30, 70, 20, 40, 60, 80">Balanced-like</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tree-wrap">
+        <div class="tree-toolbar">
+          <span>현재 트리 / Current Tree</span>
+          <span id="rootLabel">Root: —</span>
+        </div>
+        <svg id="treeSvg" viewBox="0 0 900 350" role="img" aria-label="Splay tree visualization"></svg>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:#ffd078"></i>루트 / Root</span>
+        <span><i class="dot" style="background:#65e2b2"></i>최근 접근 노드 / Last accessed</span>
+        <span><i class="dot" style="background:#77bfff"></i>일반 노드 / Node</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="nodeCount">0</b><span>노드 수 / Nodes</span></div>
+        <div class="stat"><b id="heightValue">0</b><span>높이 / Height</span></div>
+        <div class="stat"><b id="rootValue">—</b><span>루트 값 / Root value</span></div>
+      </div>
+      <p class="footer-note">사용 팁: 숫자를 입력한 뒤 Enter 키를 눌러도 실행할 수 있습니다. / Tip: Press Enter after entering a number.</p>
+    </div>
+  </section>
+
+  <aside class="side-stack">
+    <section class="panel">
+      <div class="panel-head"><h2>실행 결과 / Operation Result</h2></div>
+      <div class="panel-body">
+        <div id="status" class="operation-status">숫자를 삽입하거나 검색해 보세요.<span class="en">Insert or search for a value to get started.</span></div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>회전 및 동작 로그 / Rotation & Action Log</h2>
+        <button id="clearLogBtn" class="subtle" style="padding:5px 8px;font-size:11px">로그 지우기 / Clear</button>
+      </div>
+      <div class="panel-body"><div id="log" class="log"><div class="log-item"><strong>Ready</strong>시뮬레이터가 준비되었습니다.<small>The simulator is ready.</small></div></div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>알고리즘 흐름 / Algorithm Flow</h2></div>
+      <div class="panel-body">
+        <div class="code">SEARCH / INSERT / DELETE
+          |
+          v
+      SPLAY(target)
+          |
+     +----+----+
+     |         |
+  target    closest
+   found    node reached
+     |         |
+     +----+----+
+          |
+       ROTATE
+          |
+   update tree root</div>
+        <p class="footer-note">Splay는 목표 노드가 없을 때에도 탐색 경로의 마지막 노드를 루트로 올립니다.</p>
+        <p class="en">Even if the target is absent, splaying moves the last node reached on the search path to the root.</p>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<section class="explain-grid">
+  <div class="info-card"><b>Zig / Zag</b><p>부모가 루트일 때 한 번 회전합니다.<span class="en">A single rotation when the parent is the root.</span></p></div>
+  <div class="info-card"><b>Zig-Zig / Zag-Zag</b><p>목표와 부모가 같은 방향에 있어 같은 방향으로 두 번 회전합니다.<span class="en">Two rotations in the same direction when target and parent align.</span></p></div>
+  <div class="info-card"><b>Zig-Zag / Zag-Zig</b><p>목표와 부모가 반대 방향에 있어 서로 다른 방향으로 회전합니다.<span class="en">Two rotations in opposite directions when target and parent form a zig-zag.</span></p></div>
+  <div class="info-card"><b>Amortized Complexity</b><p>연속된 연산의 상각 시간 복잡도는 O(log n)입니다. 단일 연산은 최악 O(n)일 수 있습니다.<span class="en">Amortized O(log n) per operation over a sequence; a single operation can be O(n) worst-case.</span></p></div>
+</section>
+</main>
+
+<script>
+"use strict";
+
+let tree = null;
+let lastAccessed = null;
+let operationCount = 0;
+
+const $ = (id) => document.getElementById(id);
+const makeNode = (value) => ({ value, left: null, right: null });
+
+function addLog(title, ko, en = "") {
+  const item = document.createElement("div");
+  item.className = "log-item";
+  const strong = document.createElement("strong");
+  strong.textContent = title;
+  const body = document.createElement("div");
+  body.textContent = ko;
+  item.append(strong, body);
+  if (en) {
+    const small = document.createElement("small");
+    small.textContent = en;
+    item.append(small);
+  }
+  $("log").prepend(item);
+  while ($("log").children.length > 60) $("log").lastElementChild.remove();
+}
+
+function setStatus(ko, en, type = "") {
+  const box = $("status");
+  box.className = "operation-status " + type;
+  box.replaceChildren();
+  const first = document.createElement("div");
+  first.textContent = ko;
+  const second = document.createElement("span");
+  second.className = "en";
+  second.textContent = en;
+  box.append(first, second);
+}
+
+function rotateRight(node, logs = true) {
+  const promoted = node.left;
+  if (!promoted) return node;
+  node.left = promoted.right;
+  promoted.right = node;
+  if (logs) addLog("Right Rotation (Zig)", `${node.value}의 왼쪽 자식 ${promoted.value}가 위로 이동합니다.`, `${promoted.value} is promoted above ${node.value}.`);
+  return promoted;
+}
+
+function rotateLeft(node, logs = true) {
+  const promoted = node.right;
+  if (!promoted) return node;
+  node.right = promoted.left;
+  promoted.left = node;
+  if (logs) addLog("Left Rotation (Zag)", `${node.value}의 오른쪽 자식 ${promoted.value}가 위로 이동합니다.`, `${promoted.value} is promoted above ${node.value}.`);
+  return promoted;
+}
+
+// Recursive bottom-up splay matching the dictionary-based Python example.
+function splay(root, target) {
+  if (!root || root.value === target) {
+    if (root) addLog("Target reached", `${target}을(를) 찾았습니다. 이미 현재 서브트리의 루트입니다.`, `Found ${target}; it is already the root of this subtree.`);
+    return root;
+  }
+
+  if (target < root.value) {
+    if (!root.left) {
+      addLog("Search path ends", `${target}보다 큰 ${root.value}에서 왼쪽 자식이 없어 탐색을 종료합니다.`, `No left child at ${root.value}; the search path ends here.`);
+      return root;
+    }
+
+    if (target < root.left.value) {
+      addLog("Zig-Zig (Left-Left)", `${target}이 ${root.value}와 왼쪽 자식 ${root.left.value}보다 작습니다.`, `${target} is smaller than ${root.value} and its left child ${root.left.value}.`);
+      root.left.left = splay(root.left.left, target);
+      root = rotateRight(root);
+    } else if (target > root.left.value) {
+      addLog("Zig-Zag (Left-Right)", `${target}이 ${root.value}보다 작고 왼쪽 자식 ${root.left.value}보다 큽니다.`, `${target} lies between ${root.value} and its left child ${root.left.value}.`);
+      root.left.right = splay(root.left.right, target);
+      if (root.left.right) root.left = rotateLeft(root.left);
+    } else {
+      addLog("Zig", `${target}이 왼쪽 자식과 일치합니다.`, `${target} matches the left child.`);
+    }
+
+    return root.left ? rotateRight(root) : root;
+  } else {
+    if (!root.right) {
+      addLog("Search path ends", `${target}보다 작은 ${root.value}에서 오른쪽 자식이 없어 탐색을 종료합니다.`, `No right child at ${root.value}; the search path ends here.`);
+      return root;
+    }
+
+    if (target < root.right.value) {
+      addLog("Zag-Zig (Right-Left)", `${target}이 ${root.value}보다 크고 오른쪽 자식 ${root.right.value}보다 작습니다.`, `${target} lies between ${root.value} and its right child ${root.right.value}.`);
+      root.right.left = splay(root.right.left, target);
+      if (root.right.left) root.right = rotateRight(root.right);
+    } else if (target > root.right.value) {
+      addLog("Zag-Zag (Right-Right)", `${target}이 ${root.value}와 오른쪽 자식 ${root.right.value}보다 큽니다.`, `${target} is greater than ${root.value} and its right child ${root.right.value}.`);
+      root.right.right = splay(root.right.right, target);
+      root = rotateLeft(root);
+    } else {
+      addLog("Zag", `${target}이 오른쪽 자식과 일치합니다.`, `${target} matches the right child.`);
+    }
+
+    return root.right ? rotateLeft(root) : root;
+  }
+}
+
+function insertValue(value) {
+  if (!Number.isSafeInteger(value)) return setStatus("정수 값을 입력해 주세요.", "Please enter a valid integer.", "warn");
+  if (!tree) {
+    tree = makeNode(value);
+    lastAccessed = value;
+    addLog("Insert", `빈 트리에 ${value}를 루트로 삽입했습니다.`, `Inserted ${value} as the root of an empty tree.`);
+    setStatus(`${value}을(를) 루트로 삽입했습니다.`, `Inserted ${value} as the root.`, "good");
+    render();
+    return;
+  }
+  tree = splay(tree, value);
+  if (tree.value === value) {
+    lastAccessed = value;
+    addLog("Duplicate", `${value}은(는) 이미 존재하므로 중복 삽입하지 않았습니다.`, `${value} already exists; duplicates are not inserted.`);
+    setStatus(`${value}은(는) 이미 존재합니다. 기존 노드를 루트로 이동했습니다.`, `${value} already exists; its node has been splayed to the root.`, "warn");
+    render();
+    return;
+  }
+  const node = makeNode(value);
+  if (value < tree.value) {
+    node.right = tree;
+    node.left = tree.left;
+    tree.left = null;
+    addLog("Insert as new root", `${value}을(를) 새 루트로 만들고 기존 루트를 오른쪽에 연결했습니다.`, `Created ${value} as the new root and attached the old root on the right.`);
+  } else {
+    node.left = tree;
+    node.right = tree.right;
+    tree.right = null;
+    addLog("Insert as new root", `${value}을(를) 새 루트로 만들고 기존 루트를 왼쪽에 연결했습니다.`, `Created ${value} as the new root and attached the old root on the left.`);
+  }
+  tree = node;
+  lastAccessed = value;
+  setStatus(`${value} 삽입 완료 — 새 루트는 ${value}입니다.`, `Inserted ${value}; the new root is ${value}.`, "good");
+  render();
+}
+
+function searchValue(value) {
+  if (!Number.isSafeInteger(value)) return setStatus("정수 값을 입력해 주세요.", "Please enter a valid integer.", "warn");
+  if (!tree) {
+    setStatus("트리가 비어 있습니다.", "The tree is empty.", "warn");
+    addLog("Search", `${value}을(를) 검색했지만 트리가 비어 있습니다.`, `Could not search for ${value}: the tree is empty.`);
+    return;
+  }
+  tree = splay(tree, value);
+  const found = tree.value === value;
+  lastAccessed = tree.value;
+  if (found) {
+    addLog("Search successful", `${value}을(를) 찾았고 루트로 이동했습니다.`, `Found ${value} and moved it to the root.`);
+    setStatus(`${value} 검색 성공 — ${value}이(가) 루트가 되었습니다.`, `Search successful — ${value} is now the root.`, "good");
+  } else {
+    addLog("Search unsuccessful", `${value}은(는) 없습니다. 탐색 경로의 마지막 노드 ${tree.value}가 루트가 되었습니다.`, `${value} was not found. The last node reached, ${tree.value}, is now the root.`);
+    setStatus(`${value}을(를) 찾지 못했습니다. 가장 가까운 노드 ${tree.value}를 루트로 이동했습니다.`, `${value} was not found. The closest node reached, ${tree.value}, was moved to the root.`, "warn");
+  }
+  render();
+}
+
+function deleteValue(value) {
+  if (!Number.isSafeInteger(value)) return setStatus("정수 값을 입력해 주세요.", "Please enter a valid integer.", "warn");
+  if (!tree) {
+    setStatus("트리가 비어 있어 삭제할 수 없습니다.", "The tree is empty; nothing can be deleted.", "warn");
+    addLog("Delete", `${value} 삭제를 시도했지만 트리가 비어 있습니다.`, `Could not delete ${value}: the tree is empty.`);
+    return;
+  }
+  tree = splay(tree, value);
+  if (tree.value !== value) {
+    lastAccessed = tree.value;
+    addLog("Delete unsuccessful", `${value}을(를) 찾지 못해 삭제하지 않았습니다.`, `${value} was not found; nothing was deleted.`);
+    setStatus(`${value}이(가) 없어 삭제하지 않았습니다. 루트는 ${tree.value}입니다.`, `${value} was not found. The root is ${tree.value}.`, "warn");
+    render();
+    return;
+  }
+  addLog("Remove root", `삭제 대상 ${value}이(가) 루트에 있으므로 제거합니다.`, `The target ${value} is at the root and will be removed.`);
+  if (!tree.left) {
+    tree = tree.right;
+  } else {
+    const rightSubtree = tree.right;
+    tree = splay(tree.left, value);
+    tree.right = rightSubtree;
+    addLog("Join subtrees", `왼쪽 서브트리의 최댓값 ${tree.value}를 새 루트로 두고 오른쪽 서브트리를 연결했습니다.`, `The maximum of the left subtree (${tree.value}) becomes the root; the right subtree is attached.`);
+  }
+  lastAccessed = tree ? tree.value : null;
+  setStatus(`${value} 삭제 완료.`, `Deleted ${value}.`, "good");
+  render();
+}
+
+function getStats(node) {
+  if (!node) return {count:0,height:0};
+  const l = getStats(node.left), r = getStats(node.right);
+  return {count:1+l.count+r.count,height:1+Math.max(l.height,r.height)};
+}
+
+function render() {
+  const svg = $("treeSvg");
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const NS = "http://www.w3.org/2000/svg";
+  const make = (tag, attrs, parent=svg) => {
+    const el = document.createElementNS(NS, tag);
+    for (const [k,v] of Object.entries(attrs || {})) el.setAttribute(k, v);
+    parent.appendChild(el);
+    return el;
+  };
+  if (!tree) {
+    const t = make("text",{x:450,y:175,class:"empty"});
+    t.textContent = "Empty Tree / 빈 트리";
+  } else {
+    const positions = [];
+    const maxDepth = getStats(tree).height;
+    const width = Math.max(900, Math.pow(2, Math.min(maxDepth,7))*82);
+    const height = Math.max(350, maxDepth*82+65);
+    svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
+    svg.style.height = `${Math.min(650, Math.max(350,height))}px`;
+    function place(node, x, y, gap, parent=null) {
+      if (!node) return;
+      const item = {node,x,y,parent};
+      positions.push(item);
+      const nextGap = Math.max(35,gap/2);
+      if (node.left) place(node.left,x-gap,y+78,nextGap,item);
+      if (node.right) place(node.right,x+gap,y+78,nextGap,item);
+    }
+    place(tree,width/2,48,width/4);
+    for (const p of positions) {
+      if (p.parent) make("line",{x1:p.parent.x,y1:p.parent.y+22,x2:p.x,y2:p.y-22,class:"edge"});
+    }
+    for (const p of positions) {
+      const g = make("g",{class:"node"+(p.node===tree?" root":"")+(p.node.value===lastAccessed?" active":"")});
+      make("circle",{cx:p.x,cy:p.y,r:22},g);
+      const label = make("text",{x:p.x,y:p.y+1},g);
+      label.textContent = p.node.value;
+    }
+  }
+  const stats = getStats(tree);
+  $("nodeCount").textContent = stats.count;
+  $("heightValue").textContent = stats.height;
+  $("rootValue").textContent = tree ? tree.value : "—";
+  $("rootLabel").textContent = `Root: ${tree ? tree.value : "—"}`;
+}
+
+function runSequence(text) {
+  const tokens = text.split(/[,\s]+/).filter(Boolean);
+  if (!tokens.length) return setStatus("삽입할 숫자를 입력해 주세요.", "Enter one or more values to insert.", "warn");
+  const values = tokens.map(Number);
+  if (values.some(v => !Number.isSafeInteger(v))) return setStatus("쉼표 또는 공백으로 구분된 정수만 입력해 주세요.", "Use integers separated by commas or spaces.", "warn");
+  values.forEach(insertValue);
+  setStatus(`${values.length}개 값의 삽입을 완료했습니다.`, `Finished inserting ${values.length} value(s).`, "good");
+}
+
+function reset() {
+  tree = null; lastAccessed = null;
+  $("log").replaceChildren();
+  addLog("Reset", "트리를 초기화했습니다.", "The tree has been cleared.");
+  setStatus("트리를 초기화했습니다.", "The tree has been reset.");
+  render();
+}
+
+$("insertBtn").addEventListener("click",()=>insertValue(Number($("insertValue").value)));
+$("searchBtn").addEventListener("click",()=>searchValue(Number($("searchValue").value)));
+$("deleteBtn").addEventListener("click",()=>deleteValue(Number($("deleteValue").value)));
+$("sequenceBtn").addEventListener("click",()=>runSequence($("sequenceInput").value));
+$("resetBtn").addEventListener("click",reset);
+$("sampleBtn").addEventListener("click",()=>{reset();runSequence("30, 20, 40, 35");});
+$("clearLogBtn").addEventListener("click",()=>$("log").replaceChildren());
+document.querySelectorAll("[data-seq]").forEach(btn=>btn.addEventListener("click",()=>{$("sequenceInput").value=btn.dataset.seq;runSequence(btn.dataset.seq);}));
+[
+  ["insertValue",insertValue],["searchValue",searchValue],["deleteValue",deleteValue]
+].forEach(([id,fn])=>$ (id).addEventListener("keydown",e=>{if(e.key==="Enter")fn(Number(e.target.value));}));
+$("sequenceInput").addEventListener("keydown",e=>{if(e.key==="Enter")runSequence(e.target.value);});
+
+render();
+</script>
+</body>
+</html>
