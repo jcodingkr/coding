@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Red-Black Tree 강의 교안 (4시간) | 4-Hour Lesson Plan</title>
+<style>
+:root{--bg:#12141a;--panel:#1b1e27;--line:#2c3140;--tx:#e8e4da;--mu:#9aa0b1;--red:#d6454b;--blk:#05060a;--acc:#f0b429;--ok:#5fc48a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.75 "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+header{padding:44px 20px 28px;max-width:900px;margin:auto}
+h1{font:800 clamp(28px,5vw,46px)/1.2 Georgia,"Noto Serif KR",serif;margin:0 0 8px}
+h1 i{color:var(--red);font-style:normal}
+nav{position:sticky;top:0;z-index:5;background:#12141ae6;border-bottom:1px solid var(--line);padding:8px 20px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+nav a,.btn{color:var(--tx);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px;text-decoration:none;font:inherit;font-size:14px;cursor:pointer}
+nav a:hover,.btn:hover{border-color:var(--acc)}
+main{max-width:900px;margin:auto;padding:0 20px 80px}
+section{margin-top:48px}
+h2{font-size:26px;border-left:6px solid var(--red);padding-left:12px;margin:0 0 4px}
+h3{font-size:19px;margin:28px 0 6px;color:var(--acc)}
+.time{color:var(--mu);font-size:14px;margin-bottom:14px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:14px 0}
+.box.tip{border-color:var(--acc)}
+.box.goal{border-color:var(--ok)}
+.en{color:#a9c4f5;font-size:15px}
+.ko{display:block}
+body.only-ko .en,body.only-en .ko{display:none}
+.en{display:block}
+pre{background:#0a0b10;border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto;font:14px/1.6 "D2Coding",Consolas,monospace;color:#d8dbe6;margin:10px 0}
+pre.py{display:none}pre.py.show{display:block}
+svg{max-width:100%;height:auto}
+.figs{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:flex-end;margin:14px 0}
+.fig{text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--mu);font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left}th{background:var(--panel)}
+.r{color:var(--red);font-weight:700}.b{color:#fff;background:var(--blk);padding:0 6px;border-radius:4px;border:1px solid #555}
+input{background:#0a0b10;color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit;width:120px}
+#log{color:var(--mu);font-size:14px;min-height:22px}
+.lang{position:fixed;right:12px;bottom:12px;display:flex;gap:6px;z-index:9}
+</style></head><body>
+<div class="lang"><button class="btn" onclick="L('')">KO+EN</button><button class="btn" onclick="L('only-ko')">KO</button><button class="btn" onclick="L('only-en')">EN</button></div>
+<header>
+<h1>Red-Black Tree<br><i>레드-블랙 트리</i></h1>
+<div class="ko">파이썬 알고리즘 &amp; 자료구조 · 4시간 강의 교안 · 대상: 파이썬 기초과정을 마친 중·고등학생</div>
+<div class="en">Python Algorithms &amp; Data Structures · 4-hour lesson plan · For students who completed the Python basics course</div>
+</header>
+<nav><a href="#s1">1교시 BST와 균형<br><span class="en">Lesson 1 · BST &amp; Balance</span></a><a href="#s2">2교시 규칙·회전<br><span class="en">Lesson 2 · Rules &amp; Rotations</span></a><a href="#s3">3교시 삽입<br><span class="en">Lesson 3 · Insertion</span></a><a href="#s4">4교시 삭제·실습<br><span class="en">Lesson 4 · Deletion &amp; Practice</span></a></nav>
+<main>
+
+<section id="s1"><h2>1교시 · 왜 균형 트리가 필요할까? <span class="en" style="display:inline;font-size:16px">Why balanced trees?</span></h2>
+<div class="time">0:00 – 1:00 <span class="en">(10 min introduction · 30 min lecture · 20 min activity)</span></div>
+<div class="box goal"><span class="ko"><b>학습 목표</b> ① BST의 약점을 설명한다 ② 이진 탐색 트리를 복습한다 ③ 레드-블랙 트리의 목적을 이해한다.</span>
+<span class="en"><b>Goals</b> ① Explain the weakness of a plain BST ② Review binary search trees ③ Understand why red-black trees exist.</span></div>
+
+<h3>1-1. BST 복습 / BST Review</h3>
+<p class="ko">이진 탐색 트리(BST)는 <b>왼쪽 자식 &lt; 부모 &lt; 오른쪽 자식</b> 규칙을 지키는 트리입니다. 탐색·삽입 시간은 트리의 <b>높이 h</b>에 비례합니다: O(h).</p>
+<p class="en">A Binary Search Tree (BST) follows the rule <b>left child &lt; parent &lt; right child</b>. Search and insertion time are proportional to the tree <b>height h</b>: O(h).</p>
+<p class="en">A Binary Search Tree keeps <b>left &lt; parent &lt; right</b>. Search and insert take O(h), where h is the height.</p>
+<p class="ko"><b>문제:</b> 1, 2, 3, 4, 5를 순서대로 넣으면 한 줄로 늘어선 트리(높이 5)가 되어 O(n)이 됩니다. 배열에서 찾는 것과 다를 바 없죠!</p>
+<p class="en"><b>Problem:</b> Inserting 1, 2, 3, 4, 5 in order creates a straight-line tree (height 5), making operations O(n)—similar to searching a list.</p>
+<p class="en"><b>Problem:</b> Inserting 1,2,3,4,5 in order gives a straight line of height 5, so operations become O(n).</p>
+<div class="figs"><div class="fig" id="f-line">최악의 BST (한 줄) / Worst-case BST</div><div class="fig" id="f-ex">레드-블랙 트리 예시 / A valid red-black tree</div></div>
+<div class="box tip"><span class="ko"><b>핵심 아이디어</b> 노드에 <span class="r">빨강</span>/검정 색을 칠하고 규칙을 지키면, 가장 긴 길이가 가장 짧은 길이의 2배를 넘지 않아 높이가 O(log n)으로 유지됩니다.</span>
+<span class="en"><b>Key idea</b> Colour nodes red/black and obey a few rules; then the longest path is at most twice the shortest, so height stays O(log n).</span></div>
+
+<h3>1-2. 활동 / Activity <span class="en">(20 minutes)</span></h3>
+<p class="ko">학생 2명씩 짝지어 숫자 카드 7장 (1~7)을 <b>오름차순</b>과 <b>4, 2, 6, 1, 3, 5, 7</b> 순서로 각각 BST에 넣어 보고 높이를 비교합니다.</p>
+<p class="en">Work in pairs. Insert seven number cards (1–7) into a BST in <b>ascending order</b> and then in the order <b>4, 2, 6, 1, 3, 5, 7</b>. Compare the resulting heights.</p>
+<p class="en">In pairs, insert cards 1–7 into a BST in ascending order and then in the order 4,2,6,1,3,5,7. Compare the heights.</p>
+</section>
+
+<section id="s2"><h2>2교시 · 5가지 규칙과 회전 <span class="en" style="display:inline;font-size:16px">Rules &amp; Rotations</span></h2>
+<div class="time">1:00 – 2:00 <span class="en">(Starts after a 10-minute break)</span></div>
+<h3>2-1. 레드-블랙 트리의 5가지 규칙 / The 5 Properties</h3>
+<table><tr><th>#</th><th>한국어</th><th>English</th></tr>
+<tr><td>1</td><td>모든 노드는 <span class="r">빨강</span> 또는 <span class="b">검정</span>이다.</td><td>Every node is red or black.</td></tr>
+<tr><td>2</td><td>루트는 검정이다.</td><td>The root is black.</td></tr>
+<tr><td>3</td><td>모든 리프(NIL)는 검정이다.</td><td>Every leaf (NIL) is black.</td></tr>
+<tr><td>4</td><td>빨강 노드의 자식은 둘 다 검정이다. (빨강이 연속 불가)</td><td>A red node's children are both black (no two reds in a row).</td></tr>
+<tr><td>5</td><td>어떤 노드에서 리프까지 가는 모든 경로의 <b>검정 노드 수</b>(black-height)가 같다.</td><td>Every path from a node to its leaves has the same number of black nodes (black-height).</td></tr></table>
+<p class="ko">위 그림의 트리에서 13 → 8 → 1 → NIL, 13 → 17 → 25 → 22 → NIL 경로를 따라 검정 노드를 세어 보세요. 모두 같습니다!</p>
+<p class="en">In the tree above, count the black nodes on the paths 13 → 8 → 1 → NIL and 13 → 17 → 25 → 22 → NIL. The counts are equal!</p>
+<p class="en">In the example tree, count black nodes along 13→8→1→NIL and 13→17→25→22→NIL. They match!</p>
+<div class="box tip"><span class="ko"><b>왜 높이가 O(log n)? </b>규칙 5로 검정 노드는 모든 경로에 bh개, 규칙 4로 빨강은 검정 사이에 최대 1개씩만 끼므로 가장 긴 경로 ≤ 2 × 가장 짧은 경로. 따라서 h ≤ 2·log₂(n+1).</span>
+<span class="en"><b>Why O(log n)?</b> Rule 5 gives every path bh black nodes; Rule 4 allows at most one red between blacks, so longest ≤ 2 × shortest, hence h ≤ 2·log₂(n+1).</span></div>
+
+<h3>2-2. 회전 / Rotation</h3>
+<p class="ko">회전은 BST 규칙(좌 &lt; 부모 &lt; 우)을 깨지 않고 트리 모양만 바꾸는 O(1) 연산입니다. α, β, γ는 서브트리(회색)입니다.</p>
+<p class="en">A rotation changes only the tree shape in O(1), without violating the BST order (left &lt; parent &lt; right). α, β, and γ represent subtrees (shown in grey).</p>
+<p class="en">A rotation changes the tree's shape in O(1) without breaking the BST order. α, β, γ are subtrees (grey).</p>
+<div class="figs"><div class="fig" id="f-rot1">회전 전 / before</div><div class="fig" id="f-rot2">왼쪽 회전 후 / after left-rotate(x)</div></div>
+<h3>알고리즘 / Algorithm: Left-Rotate(x)</h3>
+<div class="box"><span class="ko">① y를 x의 오른쪽 자식으로 잡는다 ② y의 왼쪽 서브트리(β)를 x의 오른쪽으로 옮긴다 ③ y의 부모를 x의 부모로 연결한다 ④ x를 y의 왼쪽 자식으로 만든다.</span>
+<span class="en">① Let y = x.right ② Move y's left subtree (β) to x.right ③ Link y to x's old parent ④ Make x the left child of y.</span></div>
+<pre>LEFT-ROTATE(T, x)
+  y ← x.right                  // 1. set y
+  x.right ← y.left             // 2. move β
+  if y.left ≠ NIL: y.left.parent ← x
+  y.parent ← x.parent          // 3. link parent
+  if x.parent = NIL:           T.root ← y
+  else if x = x.parent.left:   x.parent.left ← y
+  else:                        x.parent.right ← y
+  y.left ← x                   // 4. x becomes y's left child
+  x.parent ← y
+// RIGHT-ROTATE is the mirror image (left ↔ right). 오른쪽 회전은 좌우 반전.</pre>
+<button class="btn" onclick="tg(this,'py-rot')">파이썬 코드 보기 / Show Python</button>
+<pre class="py" id="py-rot">def left_rotate(self, x):
+    y = x.right
+    x.right = y.left
+    if y.left is not self.NIL:
+        y.left.parent = x
+    y.parent = x.parent
+    if x.parent is self.NIL:
+        self.root = y
+    elif x is x.parent.left:
+        x.parent.left = y
+    else:
+        x.parent.right = y
+    y.left = x
+    x.parent = y
+
+def right_rotate(self, x):          # 좌우만 반대 / mirror image
+    y = x.left
+    x.left = y.right
+    if y.right is not self.NIL:
+        y.right.parent = x
+    y.parent = x.parent
+    if x.parent is self.NIL:
+        self.root = y
+    elif x is x.parent.right:
+        x.parent.right = y
+    else:
+        x.parent.left = y
+    y.right = x
+    x.parent = y</pre>
+</section>
+
+<section id="s3"><h2>3교시 · 삽입 <span class="en" style="display:inline;font-size:16px">Insertion</span></h2>
+<div class="time">2:00 – 3:00</div>
+<p class="ko"><b>전략:</b> ① 일반 BST처럼 삽입 ② 새 노드 z를 <span class="r">빨강</span>으로 칠함(규칙 5를 지키기 위해) ③ 규칙 4가 깨졌으면(부모도 빨강) 수리.</p>
+<p class="en"><b>Strategy:</b> ① Insert as in a regular BST. ② Colour the new node z <span class="r">red</span> (to preserve Rule 5). ③ If Rule 4 is violated (the parent is also red), fix the tree.</p>
+<p class="en"><b>Strategy:</b> ① Insert like a BST ② Colour z <span class="r">red</span> (keeps Rule 5) ③ If Rule 4 breaks (parent is red), repair.</p>
+<h3>수리의 3가지 경우 / Three Fix-up Cases</h3>
+<p class="ko">z의 부모 P가 빨강이면 할아버지 G는 반드시 검정입니다. 삼촌 U의 색으로 판단합니다. (아래 그림은 P가 G의 왼쪽 자식인 경우)</p>
+<p class="en">If z’s parent P is red, the grandparent G must be black. Choose the fix-up case by checking the uncle U’s colour. (The figures below assume P is the left child of G.)</p>
+<p class="en">If parent P is red, grandparent G must be black. Look at the uncle U's colour. (Figures assume P is the left child of G.)</p>
+<table><tr><th>Case</th><th>조건 / Condition</th><th>해결 / Fix</th></tr>
+<tr><td>1</td><td>삼촌 U = <span class="r">빨강</span><br><span class="en">uncle is red</span></td><td>P, U → 검정, G → 빨강, z ← G로 올라가 반복<br><span class="en">Recolour P,U black, G red; move z up to G and repeat</span></td></tr>
+<tr><td>2</td><td>U = 검정, z가 P의 <b>오른쪽</b> (꺾인 모양)<br><span class="en">U black, z is right child (triangle)</span></td><td>P를 기준으로 왼쪽 회전 → Case 3<br><span class="en">Left-rotate P → becomes Case 3</span></td></tr>
+<tr><td>3</td><td>U = 검정, z가 P의 <b>왼쪽</b> (일직선)<br><span class="en">U black, z is left child (line)</span></td><td>P → 검정, G → 빨강, G 기준 오른쪽 회전. 끝!<br><span class="en">P black, G red, right-rotate G. Done!</span></td></tr></table>
+<div class="figs">
+<div class="fig" id="f-c1a">Case 1 전 / before</div><div class="fig" id="f-c1b">Case 1 후 / after</div>
+<div class="fig" id="f-c2">Case 2 (꺾임 / triangle)</div>
+<div class="fig" id="f-c3a">Case 3 전 / before</div><div class="fig" id="f-c3b">Case 3 후 / after</div></div>
+<h3>의사코드 / Pseudo code</h3>
+<pre>RB-INSERT(T, z)
+  y ← NIL;  x ← T.root
+  while x ≠ NIL:                       // BST descent
+      y ← x
+      x ← (z.key &lt; x.key) ? x.left : x.right
+  z.parent ← y
+  if y = NIL: T.root ← z
+  else if z.key &lt; y.key: y.left ← z else y.right ← z
+  z.left ← z.right ← NIL;  z.color ← RED
+  RB-INSERT-FIXUP(T, z)
+
+RB-INSERT-FIXUP(T, z)
+  while z.parent.color = RED:
+      if z.parent = z.parent.parent.left:
+          u ← z.parent.parent.right                // uncle 삼촌
+          if u.color = RED:                        // Case 1
+              z.parent.color ← BLACK;  u.color ← BLACK
+              z.parent.parent.color ← RED
+              z ← z.parent.parent
+          else:
+              if z = z.parent.right:               // Case 2
+                  z ← z.parent;  LEFT-ROTATE(T, z)
+              z.parent.color ← BLACK               // Case 3
+              z.parent.parent.color ← RED
+              RIGHT-ROTATE(T, z.parent.parent)
+      else: same with "left" ↔ "right"
+  T.root.color ← BLACK                             // Rule 2</pre>
+<button class="btn" onclick="tg(this,'py-ins')">파이썬 코드 보기 / Show Python</button>
+<pre class="py" id="py-ins">RED, BLACK = True, False
+
+class Node:
+    def __init__(self, key, color=RED, nil=None):
+        self.key, self.color = key, color
+        self.left = self.right = self.parent = nil
+
+class RedBlackTree:
+    def __init__(self):
+        self.NIL = Node(None, BLACK)      # 모든 리프가 공유하는 검정 NIL
+        self.root = self.NIL
+
+    # left_rotate, right_rotate : 2교시 코드 그대로 사용
+
+    def search(self, key):
+        x = self.root
+        while x is not self.NIL and key != x.key:
+            x = x.left if key &lt; x.key else x.right
+        return x
+
+    def insert(self, key):
+        z = Node(key, RED, self.NIL)
+        y, x = self.NIL, self.root
+        while x is not self.NIL:
+            y = x
+            x = x.left if key &lt; x.key else x.right
+        z.parent = y
+        if y is self.NIL:      self.root = z
+        elif key &lt; y.key:      y.left = z
+        else:                  y.right = z
+        self._fix_insert(z)
+
+    def _fix_insert(self, z):
+        while z.parent.color == RED:
+            gp = z.parent.parent
+            if z.parent is gp.left:
+                u = gp.right
+                if u.color == RED:                    # Case 1
+                    z.parent.color = u.color = BLACK
+                    gp.color = RED
+                    z = gp
+                else:
+                    if z is z.parent.right:           # Case 2
+                        z = z.parent
+                        self.left_rotate(z)
+                    z.parent.color = BLACK            # Case 3
+                    z.parent.parent.color = RED
+                    self.right_rotate(z.parent.parent)
+            else:                                     # 좌우 반대 / mirror
+                u = gp.left
+                if u.color == RED:
+                    z.parent.color = u.color = BLACK
+                    gp.color = RED
+                    z = gp
+                else:
+                    if z is z.parent.left:
+                        z = z.parent
+                        self.right_rotate(z)
+                    z.parent.color = BLACK
+                    z.parent.parent.color = RED
+                    self.left_rotate(z.parent.parent)
+        self.root.color = BLACK
+
+    def show(self, n=None, depth=0):                  # 눈으로 확인하기
+        n = self.root if n is None else n
+        if n is self.NIL: return
+        self.show(n.right, depth + 1)
+        print("    " * depth + f"{n.key}({'R' if n.color else 'B'})")
+        self.show(n.left, depth + 1)
+
+t = RedBlackTree()
+for k in [1, 2, 3, 4, 5, 6, 7]:
+    t.insert(k)
+t.show()          # 높이가 3으로 유지됨! / height stays 3</pre>
+<h3>직접 해보기 / Try it yourself</h3>
+<p class="ko">숫자를 입력해 삽입해 보세요. 오름차순(1,2,3…)으로 넣어도 한 줄이 되지 않습니다.</p>
+<p class="en">Enter numbers to insert them. Even when inserted in ascending order (1, 2, 3, …), the tree will not become a straight line.</p>
+<p class="en">Insert numbers one by one. Even ascending input never degenerates into a line.</p>
+<input id="num" type="number" placeholder="숫자 / number"> <button class="btn" onclick="addNum()">삽입 / Insert</button> <button class="btn" onclick="demoAsc()">1~10 자동 / Auto 1–10</button> <button class="btn" onclick="resetT()">초기화 / Reset</button>
+<div id="log"></div><div class="fig" id="live" style="overflow-x:auto;margin-top:8px">빈 트리 / empty</div>
+</section>
+
+<section id="s4"><h2>4교시 · 삭제 개요와 실습 <span class="en" style="display:inline;font-size:16px">Deletion &amp; Practice</span></h2>
+<div class="time">3:00 – 4:00 <span class="en">(20 min deletion · 10 min comparison · 25 min practice · 5 min wrap-up)</span></div>
+<h3>4-1. 삭제 개념 / Deletion concept</h3>
+<p class="ko">삭제는 삽입보다 어렵습니다. <b>검정</b> 노드를 지우면 규칙 5가 깨지기 때문입니다. 전체 흐름만 이해합시다.</p>
+<p class="en">Deletion is harder than insertion because removing a <b>black</b> node can violate Rule 5. For this lesson, focus on understanding the overall process.</p>
+<p class="en">Deletion is harder than insertion because removing a <b>black</b> node breaks Rule 5. We study the overall flow.</p>
+<pre>RB-DELETE(T, z)
+  1. BST처럼 삭제 (자식이 둘이면 후계자 successor로 대체)   // delete like a BST
+  2. 실제로 제거된(또는 옮겨진) 노드의 원래 색을 기억        // remember original colour
+  3. 그 색이 RED   → 끝 (규칙 위반 없음)                    // nothing breaks
+  4. 그 색이 BLACK → 대체 노드 x가 "이중 검정(extra black)"  // fix-up needed
+       형제 w의 색과 w의 자식 색에 따라 4가지 경우:
+       Case 1: w가 RED           → 회전+재색칠 후 Case 2~4로
+       Case 2: w, w의 자식 모두 BLACK → w를 RED로, extra black을 위로 보냄
+       Case 3: w의 먼 쪽 자식이 BLACK, 가까운 쪽이 RED → w 회전 → Case 4
+       Case 4: w의 먼 쪽 자식이 RED → 회전 1번으로 종료</pre>
+<div class="box tip"><span class="ko"><b>지도 팁</b> 삭제 코드는 길어서 중·고등 과정에서는 위 흐름도와 손으로 따라가는 연습까지만 권장합니다. 심화반에는 Wikipedia 문서의 삭제 항목을 과제로 줄 수 있습니다.</span>
+<span class="en"><b>Teaching tip</b> Full deletion code is long; for this level, trace the flow by hand. Advanced students can read the deletion section of the Wikipedia article.</span></div>
+<h3>4-2. 시간 복잡도 / Complexity</h3>
+<table><tr><th>연산 / Operation</th><th>BST (worst)</th><th>Red-Black Tree (worst)</th></tr>
+<tr><td>Search 탐색</td><td>O(n)</td><td>O(log n)</td></tr><tr><td>Insert 삽입</td><td>O(n)</td><td>O(log n) · 회전 최대 2번 / ≤ 2 rotations</td></tr><tr><td>Delete 삭제</td><td>O(n)</td><td>O(log n) · 회전 최대 3번 / ≤ 3 rotations</td></tr></table>
+<p class="ko">공간: O(n). 활용: Java <code>TreeMap</code>, C++ <code>std::map</code>, 리눅스 커널의 스케줄러 등. (파이썬 내장 <code>dict</code>는 해시 테이블이라 다릅니다.)</p>
+<p class="en">Space complexity: O(n). Applications include Java <code>TreeMap</code>, C++ <code>std::map</code>, and the Linux kernel scheduler. (Python’s built-in <code>dict</code> is different because it uses a hash table.)</p>
+<p class="en">Space O(n). Used in Java TreeMap, C++ std::map and the Linux kernel scheduler. (Python's dict is a hash table, not an RB tree.)</p>
+<h3>4-3. 실습 문제 / Exercises</h3>
+<ol class="ko"><li>[기본] 10, 20, 30 을 차례로 삽입할 때 각 단계의 색과 회전을 그리세요.</li>
+<li>[기본] 1~7을 삽입하면 최종 높이는? 왜 BST와 다른가요?</li>
+<li>[응용] <code>black_height(node)</code> 함수를 작성하세요.</li>
+<li>[응용] 5가지 규칙을 검사하는 <code>is_valid(tree)</code> 함수를 작성하세요.</li>
+<li>[도전] 1~1000을 삽입한 후 트리 높이를 구하고 2·log₂(1001)과 비교하세요.</li></ol>
+<ol class="en"><li>[Basic] Draw colours and rotations step by step when inserting 10, 20, 30.</li>
+<li>[Basic] What is the final height after inserting 1–7? Why differs from a BST?</li>
+<li>[Apply] Write <code>black_height(node)</code>.</li>
+<li>[Apply] Write <code>is_valid(tree)</code> that checks all 5 properties.</li>
+<li>[Challenge] Insert 1–1000, measure the height, compare with 2·log₂(1001).</li></ol>
+<button class="btn" onclick="tg(this,'py-ans')">모범 답안 코드 보기 / Show sample answer</button>
+<pre class="py" id="py-ans">def height(t, n=None):
+    n = t.root if n is None else n
+    if n is t.NIL: return 0
+    return 1 + max(height(t, n.left), height(t, n.right))
+
+def black_height(t, n):                 # 문제 3 / Ex.3
+    if n is t.NIL: return 0
+    l, r = black_height(t, n.left), black_height(t, n.right)
+    if l == -1 or r == -1 or l != r: return -1      # 규칙 5 위반 / Rule 5 broken
+    return l + (0 if n.color == RED else 1)
+
+def is_valid(t):                        # 문제 4 / Ex.4
+    if t.root.color == RED: return False            # 규칙 2
+    def ok(n):
+        if n is t.NIL: return True
+        if n.color == RED and (n.left.color == RED or n.right.color == RED):
+            return False                            # 규칙 4
+        return ok(n.left) and ok(n.right)
+    return ok(t.root) and black_height(t, t.root) != -1
+
+t = RedBlackTree()
+for k in range(1, 1001): t.insert(k)
+print(height(t), is_valid(t))           # 약 19 이하 / about 19 or less</pre>
+<div class="box goal"><span class="ko"><b>정리</b> 5가지 규칙 → 높이 O(log n) 보장 · 삽입은 "빨강으로 넣고, 삼촌 색을 보고, 재색칠 또는 회전" · 회전은 O(1).</span>
+<span class="en"><b>Summary</b> 5 rules ⇒ O(log n) height · Insert red, check the uncle, recolour or rotate · Rotation is O(1).</span></div>
+<p class="time">참고 / Reference: <a style="color:var(--acc)" href="https://en.wikipedia.org/wiki/Red%E2%80%93black_tree">Wikipedia – Red–black tree</a></p>
+</section></main>
+
+<script>
+function L(c){document.body.className=c}
+function tg(b,id){document.getElementById(id).classList.toggle('show')}
+function T(k,c,l,r){return{k:k,c:c,l:l||null,r:r||null}}
+function S(k){return T(k,'S')}
+function draw(el,root){let i=0,md=0;(function w(n,d){if(!n)return;w(n.l,d+1);n.x=i++;n.y=d;md=Math.max(md,d);w(n.r,d+1)})(root,0);
+const W=Math.max(i,1)*44+16,H=(md+1)*54+16;let ln='',nd='';
+(function p(n){if(!n)return;[n.l,n.r].forEach(c=>{if(c){ln+=`<line x1="${n.x*44+30}" y1="${n.y*54+28}" x2="${c.x*44+30}" y2="${c.y*54+28}" stroke="#6b7186" stroke-width="2"/>`;p(c)}});
+const f=n.c=='R'?'#d6454b':n.c=='S'?'#3a3f4d':'#05060a',s=n.c=='S'?'#8a90a3':'#b9bdcb';
+nd+=n.c=='S'?`<rect x="${n.x*44+14}" y="${n.y*54+14}" width="32" height="28" rx="6" fill="${f}" stroke="${s}"/>`:`<circle cx="${n.x*44+30}" cy="${n.y*54+28}" r="17" fill="${f}" stroke="${s}" stroke-width="2"/>`;
+nd+=`<text x="${n.x*44+30}" y="${n.y*54+33}" text-anchor="middle" fill="#fff" font-size="14" font-family="sans-serif">${n.k}</text>`})(root);
+el.insertAdjacentHTML('afterbegin',`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${ln}${nd}</svg>`)}
+function F(id,t){draw(document.getElementById(id),t)}
+const R='R',B='B';
+F('f-line',T(1,B,0,T(2,R,0,T(3,B,0,T(4,R,0,T(5,B))))));
+F('f-ex',T(13,B,T(8,R,T(1,B,0,T(6,R)),T(11,B)),T(17,R,T(15,B),T(25,B,T(22,R),T(27,R)))));
+F('f-rot1',T('x',B,S('α'),T('y',R,S('β'),S('γ'))));
+F('f-rot2',T('y',R,T('x',B,S('α'),S('β')),S('γ')));
+F('f-c1a',T('G',B,T('P',R,T('z',R)),T('U',R)));
+F('f-c1b',T('G',R,T('P',B,T('z',R)),T('U',B)));
+F('f-c2',T('G',B,T('P',R,0,T('z',R)),T('U',B)));
+F('f-c3a',T('G',B,T('P',R,T('z',R)),T('U',B)));
+F('f-c3b',T('P',B,T('z',R),T('G',R,0,T('U',B))));
+/* live demo: compact RB insert (JS) */
+let root=null;
+function rotL(x){const y=x.r;x.r=y.l;if(y.l)y.l.p=x;y.p=x.p;if(!x.p)root=y;else if(x==x.p.l)x.p.l=y;else x.p.r=y;y.l=x;x.p=y}
+function rotR(x){const y=x.l;x.l=y.r;if(y.r)y.r.p=x;y.p=x.p;if(!x.p)root=y;else if(x==x.p.r)x.p.r=y;else x.p.l=y;y.r=x;x.p=y}
+const col=n=>n?n.c:B;
+function ins(k){const z={k:k,c:R,l:null,r:null,p:null};let y=null,x=root;while(x){y=x;x=k<x.k?x.l:x.r}
+z.p=y;if(!y)root=z;else if(k<y.k)y.l=z;else y.r=z;let log='';
+let n=z;while(n.p&&n.p.c==R){const g=n.p.p,left=n.p==g.l,u=left?g.r:g.l;
+if(col(u)==R){n.p.c=B;u.c=B;g.c=R;n=g;log+='Case 1 ';}
+else{if(left&&n==n.p.r){n=n.p;rotL(n);log+='Case 2 ';}else if(!left&&n==n.p.l){n=n.p;rotR(n);log+='Case 2 ';}
+n.p.c=B;n.p.p.c=R;left?rotR(n.p.p):rotL(n.p.p);log+='Case 3 ';break}}
+root.c=B;return log}
+function ht(n){return n?1+Math.max(ht(n.l),ht(n.r)):0}
+function paint(msg){const el=document.getElementById('live');el.innerHTML='';if(root)draw(el,root);document.getElementById('log').textContent=msg+' · 높이/height = '+ht(root)}
+function addNum(){const v=document.getElementById('num');if(v.value==='')return;const k=+v.value,m=ins(k);v.value='';paint(k+' 삽입: '+(m||'수리 없음 / no fix-up'))}
+function demoAsc(){resetT();let m='';for(let k=1;k<=10;k++)m=ins(k);paint('1~10 삽입 완료 / done')}
+function resetT(){root=null;document.getElementById('live').textContent='빈 트리 / empty';document.getElementById('log').textContent=''}
+</script></body></html>
